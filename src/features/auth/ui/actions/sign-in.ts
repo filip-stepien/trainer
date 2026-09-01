@@ -12,8 +12,6 @@ export type SignInActionState = {
 
 const errorMessages: Partial<Record<AuthErrorCode, string>> = {
     [AuthErrorCode.InvalidCredentials]: 'Nieprawidłowy adres e-mail lub hasło.',
-    [AuthErrorCode.EmailNotConfirmed]: 'Potwierdź adres e-mail, zanim się zalogujesz.',
-    [AuthErrorCode.UserBanned]: 'To konto zostało zablokowane.',
     [AuthErrorCode.RateLimited]: 'Zbyt wiele prób. Spróbuj ponownie za chwilę.',
     [AuthErrorCode.Unknown]: 'Coś poszło nie tak. Spróbuj ponownie.'
 };

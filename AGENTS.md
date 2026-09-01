@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Project conventions
 
-Next.js (App Router, TypeScript, Tailwind CSS). Auth via Supabase, wrapped so the provider is swappable — hexagonal architecture (ports & adapters) combined with a feature-based folder layout.
+Next.js (App Router, TypeScript, Tailwind CSS). Database and auth via Neon (Postgres + Neon Auth, managed Better Auth), wrapped so the provider is swappable — hexagonal architecture (ports & adapters) combined with a feature-based folder layout.
 
 ## Architecture shape
 
@@ -25,7 +25,7 @@ application/
                           here, NOT in domain/ — a port is a boundary contract defined
                           by what use-cases need, not business knowledge itself.
   use-cases/             use-case factories, flat files (sign-in.ts, sign-up.ts, ...)
-infrastructure/          adapters implementing the ports (e.g. supabase-auth-provider.ts).
+infrastructure/          adapters implementing the ports (e.g. neon-auth-provider.ts).
                           Only file(s) here may import the actual provider SDK.
 ui/
   actions/               one Next.js Server Action per file, named after the action
@@ -43,7 +43,7 @@ domain/                  generic, business-agnostic kernel types used by every l
                           (e.g. Result<T, E>) — pure plumbing, zero business meaning.
                           Does NOT belong under a feature's domain/.
 infrastructure/          runtime/platform concerns: env var reading, provider SDK
-                          client factories (Supabase browser/server/middleware clients)
+                          client factories (the Neon Auth singleton, the Postgres client factory)
 index.ts                 single public barrel for shared/
 ```
 
@@ -52,7 +52,7 @@ index.ts                 single public barrel for shared/
 - Crossing OUT of a feature (e.g. from `app/`) always goes through that feature's `index.ts`. Never reach into a feature's `domain/`, `application/`, `infrastructure/`, or `ui/` from outside.
 - Crossing OUT of `shared/` works the same way: only `@/shared` (the barrel), never a deep path like `@/shared/infrastructure/env`.
 - Within a feature or within `shared/`, sibling internal files import each other directly (e.g. `ui/actions/sign-in.ts` imports `AuthErrorCode` straight from `../../domain/errors`, not through the feature's own barrel). The barrel is the feature's public surface, not a mandatory hop for every internal import.
-- The composition root (wiring an adapter into use-cases, building a per-request provider client) lives in the feature's `index.ts`.
+- The composition root (wiring an adapter into use-cases) lives in the feature's `index.ts`. Whether the adapter is built once as a module-level singleton or fresh per request depends on the provider (Neon Auth's `auth` object is a singleton that reads request context lazily per call; a provider without that trick needs a fresh client per request instead).
 
 ### Errors
 
@@ -60,7 +60,7 @@ index.ts                 single public barrel for shared/
 - The caller decides how to present a `Result`'s error — mapping to a message, logging, etc. — never bake presentation into the domain/application layer.
 - Error codes are a dictionary, not a bare union: `export const AuthErrorCode = { InvalidCredentials: 'invalid_credentials', ... } as const` plus `export type AuthErrorCode = (typeof AuthErrorCode)[keyof typeof AuthErrorCode]`. Call sites reference `AuthErrorCode.InvalidCredentials`, never the raw string literal.
 - One shared error-code union per bounded concept is fine even if a given operation can't produce every member of it — don't fragment into a separate union per operation unless there's a concrete reason to.
-- Match a provider's own errors by its stable error **code** (e.g. Supabase's `error.code`), never by parsing `error.message` — message text is locale/wording-dependent and not a public contract.
+- Match a provider's own errors by its stable error **code** (e.g. Better Auth's `error.code`, like `INVALID_EMAIL_OR_PASSWORD`), never by parsing `error.message` — message text is locale/wording-dependent and not a public contract.
 
 ## Code style
 
@@ -84,7 +84,19 @@ index.ts                 single public barrel for shared/
 
 ## Known gotcha: proxy.ts
 
-The installed Next.js version (16.3.4, Turbopack) accepts and compiles `proxy.ts` (the file Next.js docs say replaces deprecated `middleware.ts`) without error, but it **does not execute at runtime** — empty middleware manifests, no session refresh, nothing. Verified directly (diagnostic response header, manifest inspection) and by reading the official `@next/codemod middleware-to-proxy` transform source, which performs the identical rename — so this isn't a migration mistake, it's a bug/limitation in this Next.js version. Keep using `middleware.ts` with `export function middleware` until a future Next.js patch actually runs `proxy.ts`. Do not re-migrate to `proxy.ts` without re-verifying it executes at runtime first.
+The installed Next.js version (16.3.4, Turbopack) accepts and compiles `proxy.ts` (the file Next.js docs say replaces deprecated `middleware.ts`) without error, but it **does not execute at runtime** — empty middleware manifests, no session refresh, nothing. Verified directly (diagnostic response header, manifest inspection) and by reading the official `@next/codemod middleware-to-proxy` transform source, which performs the identical rename — so this isn't a migration mistake, it's a bug/limitation in this Next.js version. Keep using `middleware.ts` (a default export or a named `middleware` export both work) until a future Next.js patch actually runs `proxy.ts`. Do not re-migrate to `proxy.ts` without re-verifying it executes at runtime first.
+
+## Neon Auth
+
+- `@neondatabase/auth` is still pre-1.0 (beta) as of this writing — a conscious risk accepted for this project, not an oversight. Expect breaking changes on upgrade; re-check the actual installed types in `node_modules` before trusting docs or memory, the API has already had one breaking rewrite.
+- `NEON_AUTH_BASE_URL`, `NEON_AUTH_JWKS_URL`, and `DATABASE_URL` are Neon-managed — read them through `@neon/env`'s `parseEnv(neonConfig)` (see `shared/infrastructure/env.ts`), not raw `process.env`. `NEON_AUTH_COOKIE_SECRET` is NOT Neon-managed — it's an app-level secret we generate ourselves (`openssl rand -base64 32`, minimum 32 characters) and store only in `.env.local`/deployment secrets.
+- The `auth` object (`createNeonAuth(...)`) is a genuine module-level singleton (`shared/infrastructure/neon/auth.ts`), unlike a typical per-request provider client — its methods read the current request's cookies/headers lazily via `next/headers` at call time, not at construction time. Don't rebuild it per request.
+- Sign-up requires a `name` field in addition to email/password (Better Auth's default user schema) — the sign-up form collects first/last name and concatenates them.
+- Local dev works out of the box because `allow_localhost` is enabled on this Neon Auth project's config; a new deployment domain must be registered with `neon neon-auth domain add <domain>` or sign-in will fail with `invalid domain`.
+
+## Known gotcha: auth.middleware() crashes on Edge
+
+`auth.middleware({ loginUrl: '/login' })` (from `@neondatabase/auth/next/server`) looks like the obvious way to protect `/dashboard`, matching the library's own documented example — **do not add it to `middleware.ts`**. Its bundle pulls in `node:fs`, which does not exist in the Edge runtime that classic `middleware.ts` uses by default, and crashes every matched request with `Error: Failed to load external module node:fs` (a 500, confirmed via `next start` + curl, not just a build-time warning). Explicitly opting the file into `export const runtime = 'nodejs'` does not fix it either — the middleware silently disappears from `middleware-manifest.json` entirely and never runs (same empty-manifest symptom as the `proxy.ts` bug above, different cause). `proxy.ts` isn't a fallback here either, per its own gotcha. Net effect: there is currently no working way to run Neon Auth's own middleware-based route protection in this project's toolchain (Next 16.3.4 + Turbopack + `@neondatabase/auth` 0.5.0-beta) — rely solely on the page-level `getCurrentUser()` + `redirect()` check (already in every protected page) instead of adding `middleware.ts` back for this. Re-verify at runtime (not just a clean build) before ever re-adding it.
 
 ## Git
 

@@ -24,7 +24,7 @@ async function DashboardAccount() {
     return (
         <>
             <p className='text-sm text-black/60 dark:text-white/60'>
-                Zalogowano jako <span className='font-medium'>{user.email}</span>
+                Zalogowano jako <span className='font-medium'>{user.name}</span> ({user.email})
             </p>
             <form action={signOutAction}>
                 <button

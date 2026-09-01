@@ -1,4 +1,5 @@
 export type AuthUser = {
     id: string;
-    email: string | null;
+    email: string;
+    name: string;
 };

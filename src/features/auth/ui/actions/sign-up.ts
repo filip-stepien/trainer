@@ -18,6 +18,8 @@ const errorMessages: Partial<Record<AuthErrorCode, string>> = {
 };
 
 const signUpSchema = z.object({
+    firstName: z.string().min(1, 'Podaj imię.'),
+    lastName: z.string().min(1, 'Podaj nazwisko.'),
     email: z.email('Podaj prawidłowy adres e-mail.'),
     password: z.string().min(6, 'Hasło musi mieć co najmniej 6 znaków.')
 });
@@ -29,7 +31,9 @@ export async function signUpAction(formData: FormData): Promise<SignUpActionStat
         return { error: parsed.error.issues[0]?.message };
     }
 
-    const result = await signUp(parsed.data);
+    const { firstName, lastName, email, password } = parsed.data;
+
+    const result = await signUp({ name: `${firstName} ${lastName}`, email, password });
 
     if (!result.ok) {
         return { error: errorMessages[result.error] ?? errorMessages[AuthErrorCode.Unknown] };

@@ -1,3 +1,7 @@
+import { parseEnv } from '@neon/env';
+
+import neonConfig from '../../../neon';
+
 function requireEnv(name: string): string {
     const value = process.env[name];
     if (!value) {
@@ -7,10 +11,13 @@ function requireEnv(name: string): string {
 }
 
 export const env = {
-    get supabaseUrl() {
-        return requireEnv('NEXT_PUBLIC_SUPABASE_URL');
+    get databaseUrl() {
+        return parseEnv(neonConfig).postgres.databaseUrl;
     },
-    get supabaseAnonKey() {
-        return requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    get neonAuthBaseUrl() {
+        return parseEnv(neonConfig).auth.baseUrl;
+    },
+    get neonAuthCookieSecret() {
+        return requireEnv('NEON_AUTH_COOKIE_SECRET');
     }
 };

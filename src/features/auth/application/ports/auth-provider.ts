@@ -6,6 +6,7 @@ import type { AuthUser } from '../../domain/user';
 export type SignUpInput = {
     email: string;
     password: string;
+    name: string;
 };
 
 export type SignInInput = {
