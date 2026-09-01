@@ -44,6 +44,20 @@ domain/                  generic, business-agnostic kernel types used by every l
                           Does NOT belong under a feature's domain/.
 infrastructure/          runtime/platform concerns: env var reading, provider SDK
                           client factories (the Neon Auth singleton, the Postgres client factory)
+ui/                      generic, business-agnostic UI kit — shadcn's own CLI-managed
+                          output, not hand-written application code:
+  components/            shadcn/ui primitives (button.tsx, card.tsx, sidebar.tsx, ...).
+                          components.json's `ui` alias points here (@/shared/ui/components).
+    blocks/<block-name>/  a shadcn block installed wholesale, kept under its registry
+                          name (e.g. components/blocks/dashboard/ for
+                          `@shadcn/dashboard-01`) — composed out of the sibling
+                          primitives in ui/components/, not a primitive itself. A
+                          feature-specific composed view (not a vendored block) still
+                          belongs in that feature's own ui/components/.
+  hooks/                 supporting hooks for the primitives (use-mobile.ts).
+                          components.json's `hooks` alias points here.
+  lib/                   supporting utilities (cn() in lib/utils.ts).
+                          components.json's `lib`/`utils` aliases point here.
 index.ts                 single public barrel for shared/
 ```
 
@@ -81,6 +95,11 @@ index.ts                 single public barrel for shared/
 
 - Prettier config (`.prettierrc.json`): `printWidth: 100`, `tabWidth: 4`, `semi: true`, `singleQuote: true`, `jsxSingleQuote: true`, `trailingComma: "none"`, `bracketSameLine: false`, `arrowParens: "avoid"`, `endOfLine: "lf"`, plugin `prettier-plugin-tailwindcss`.
 - After any code change, verify with: `npx tsc --noEmit`, `npm run lint`, `npx prettier --write .`, then a clean build (`rm -rf .next && npm run build`).
+
+## shadcn/ui
+
+- `components.json` aliases are customized: `ui` → `@/shared/ui/components`, `hooks` → `@/shared/ui/hooks`, `lib`/`utils` → `@/shared/ui/lib` (see the `shared/` shape above), not the CLI's default `@/components/ui`, `@/hooks`, `@/lib`. The `components` alias stays at the CLI default (`@/components`) since a freshly-added block has no single correct home the CLI can target — after `add`, manually move its files into `shared/ui/components/blocks/<block-name>/` (matching the registry item's own name, e.g. `@shadcn/dashboard-01` → `components/blocks/dashboard/`) and fix their imports.
+- A route that just renders a vendored block for demo/example purposes (not a real feature with its own domain/application/infrastructure) imports the block's components straight from `shared/ui/components/blocks/<block-name>/` — e.g. `src/app/dashboard-example/page.tsx` importing from `@/shared/ui/components/blocks/dashboard/*`. A feature that actually builds on a block still keeps its own composed views in that feature's `ui/components/`, not in `shared/`.
 
 ## Known gotcha: proxy.ts
 
