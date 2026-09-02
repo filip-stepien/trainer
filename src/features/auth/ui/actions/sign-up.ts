@@ -1,10 +1,9 @@
 'use server';
 
-import { redirect } from 'next/navigation';
-import { z } from 'zod';
-
 import { AuthErrorCode } from '../../domain/errors';
-import { signUp } from '../..';
+import { signUp } from '../../composition';
+import { redirectToHome } from '../lib/navigation';
+import { validateSignUpForm } from '../lib/validation';
 
 export type SignUpActionState = {
     error?: string;
@@ -17,21 +16,14 @@ const errorMessages: Partial<Record<AuthErrorCode, string>> = {
     [AuthErrorCode.Unknown]: 'Coś poszło nie tak. Spróbuj ponownie.'
 };
 
-const signUpSchema = z.object({
-    firstName: z.string().min(1, 'Podaj imię.'),
-    lastName: z.string().min(1, 'Podaj nazwisko.'),
-    email: z.email('Podaj prawidłowy adres e-mail.'),
-    password: z.string().min(6, 'Hasło musi mieć co najmniej 6 znaków.')
-});
-
 export async function signUpAction(formData: FormData): Promise<SignUpActionState> {
-    const parsed = signUpSchema.safeParse(Object.fromEntries(formData));
+    const validation = validateSignUpForm(formData);
 
-    if (!parsed.success) {
-        return { error: parsed.error.issues[0]?.message };
+    if (!validation.ok) {
+        return { error: validation.error };
     }
 
-    const { firstName, lastName, email, password } = parsed.data;
+    const { firstName, lastName, email, password } = validation.data;
 
     const result = await signUp({ name: `${firstName} ${lastName}`, email, password });
 
@@ -39,5 +31,5 @@ export async function signUpAction(formData: FormData): Promise<SignUpActionStat
         return { error: errorMessages[result.error] ?? errorMessages[AuthErrorCode.Unknown] };
     }
 
-    redirect('/');
+    redirectToHome();
 }

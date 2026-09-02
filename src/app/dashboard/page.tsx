@@ -1,7 +1,10 @@
 import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
-import { getCurrentUser, signOutAction } from '@/features/auth';
+import { signOutAction } from '@/features/auth';
+import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
+import { getClientListPath } from '@/features/clients';
+import { Button } from '@/shared';
 
 export default function DashboardPage() {
     return (
@@ -15,17 +18,16 @@ export default function DashboardPage() {
 }
 
 async function DashboardAccount() {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        redirect('/login');
-    }
+    const user = await getAuthenticatedUserOrRedirect();
 
     return (
         <>
             <p className='text-sm text-black/60 dark:text-white/60'>
                 Zalogowano jako <span className='font-medium'>{user.name}</span> ({user.email})
             </p>
+            <Button render={<Link href={getClientListPath()} />} nativeButton={false}>
+                Podopieczni
+            </Button>
             <form action={signOutAction}>
                 <button
                     type='submit'

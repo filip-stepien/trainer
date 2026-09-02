@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { parseEnv } from '@neon/env';
 
 import neonConfig from '../../../neon';

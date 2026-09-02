@@ -1,10 +1,9 @@
 'use server';
 
-import { redirect } from 'next/navigation';
-
-import { signOut } from '../..';
+import { signOut } from '../../composition';
+import { redirectToLogin } from '../lib/navigation';
 
 export async function signOutAction(): Promise<void> {
     await signOut();
-    redirect('/login');
+    redirectToLogin();
 }

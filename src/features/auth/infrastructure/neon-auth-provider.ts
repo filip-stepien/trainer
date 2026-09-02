@@ -1,4 +1,6 @@
-import { auth, err, ok } from '@/shared';
+import { connection } from 'next/server';
+
+import { neonAuth, err, ok } from '@/shared/server';
 
 import { AuthErrorCode } from '../domain/errors';
 import type { AuthUser } from '../domain/user';
@@ -12,7 +14,7 @@ const neonAuthErrorCodes: Partial<Record<string, AuthErrorCode>> = {
     PASSWORD_TOO_LONG: AuthErrorCode.WeakPassword
 };
 
-function mapAuthError(error: { code?: string; status?: number }): AuthErrorCode {
+function toAuthError(error: { code?: string; status?: number }): AuthErrorCode {
     if (error.status === 429) {
         return AuthErrorCode.RateLimited;
     }
@@ -30,10 +32,10 @@ function toAuthUser(user: { id: string; email: string; name: string }): AuthUser
 export function createNeonAuthProvider(): AuthProvider {
     return {
         async signUp({ email, password, name }: SignUpInput) {
-            const { data, error } = await auth.signUp.email({ email, password, name });
+            const { data, error } = await neonAuth.signUp.email({ email, password, name });
 
             if (error) {
-                return err(mapAuthError(error));
+                return err(toAuthError(error));
             }
 
             if (!data?.user) {
@@ -44,10 +46,10 @@ export function createNeonAuthProvider(): AuthProvider {
         },
 
         async signIn({ email, password }: SignInInput) {
-            const { data, error } = await auth.signIn.email({ email, password });
+            const { data, error } = await neonAuth.signIn.email({ email, password });
 
             if (error) {
-                return err(mapAuthError(error));
+                return err(toAuthError(error));
             }
 
             if (!data?.user) {
@@ -58,7 +60,7 @@ export function createNeonAuthProvider(): AuthProvider {
         },
 
         async signOut() {
-            const { error } = await auth.signOut();
+            const { error } = await neonAuth.signOut();
             if (error) {
                 return err(AuthErrorCode.Unknown);
             }
@@ -66,7 +68,8 @@ export function createNeonAuthProvider(): AuthProvider {
         },
 
         async getCurrentUser() {
-            const { data } = await auth.getSession();
+            await connection();
+            const { data } = await neonAuth.getSession();
             return data?.user ? toAuthUser(data.user) : null;
         }
     };

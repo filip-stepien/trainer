@@ -1,10 +1,9 @@
 'use server';
 
-import { redirect } from 'next/navigation';
-import { z } from 'zod';
-
 import { AuthErrorCode } from '../../domain/errors';
-import { signIn } from '../..';
+import { signIn } from '../../composition';
+import { redirectToDashboard } from '../lib/navigation';
+import { validateSignInForm } from '../lib/validation';
 
 export type SignInActionState = {
     error?: string;
@@ -16,23 +15,18 @@ const errorMessages: Partial<Record<AuthErrorCode, string>> = {
     [AuthErrorCode.Unknown]: 'Coś poszło nie tak. Spróbuj ponownie.'
 };
 
-const signInSchema = z.object({
-    email: z.email('Podaj prawidłowy adres e-mail.'),
-    password: z.string().min(1, 'Podaj hasło.')
-});
-
 export async function signInAction(formData: FormData): Promise<SignInActionState> {
-    const parsed = signInSchema.safeParse(Object.fromEntries(formData));
+    const validation = validateSignInForm(formData);
 
-    if (!parsed.success) {
-        return { error: parsed.error.issues[0]?.message };
+    if (!validation.ok) {
+        return { error: validation.error };
     }
 
-    const result = await signIn(parsed.data);
+    const result = await signIn(validation.data);
 
     if (!result.ok) {
         return { error: errorMessages[result.error] ?? errorMessages[AuthErrorCode.Unknown] };
     }
 
-    redirect('/dashboard');
+    redirectToDashboard();
 }

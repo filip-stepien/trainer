@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { SignUpForm } from '@/features/auth';
+import { getLoginPath, SignUpForm } from '@/features/auth';
 
 export default function SignUpPage() {
     return (
@@ -9,7 +9,7 @@ export default function SignUpPage() {
             <SignUpForm />
             <p className='text-sm text-black/60 dark:text-white/60'>
                 Masz już konto?{' '}
-                <Link href='/login' className='underline'>
+                <Link href={getLoginPath()} className='underline'>
                     Zaloguj się
                 </Link>
             </p>

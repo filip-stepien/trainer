@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { getLoginPath, getSignUpPath } from '@/features/auth';
+
 export default function Home() {
     return (
         <main className='mx-auto flex min-h-svh max-w-sm flex-col items-center justify-center gap-6 px-4 text-center'>
@@ -9,11 +11,14 @@ export default function Home() {
                 feature-based).
             </p>
             <div className='flex gap-4 text-sm font-medium'>
-                <Link href='/login' className='bg-foreground text-background rounded-md px-4 py-2'>
+                <Link
+                    href={getLoginPath()}
+                    className='bg-foreground text-background rounded-md px-4 py-2'
+                >
                     Zaloguj się
                 </Link>
                 <Link
-                    href='/signup'
+                    href={getSignUpPath()}
                     className='rounded-md border border-black/10 px-4 py-2 dark:border-white/20'
                 >
                     Załóż konto
