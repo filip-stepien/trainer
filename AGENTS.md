@@ -26,14 +26,23 @@ application/
                           by what use-cases need, not business knowledge itself.
   use-cases/             use-case factories, flat files (sign-in.ts, sign-up.ts, ...)
 infrastructure/          adapters implementing the ports (e.g. neon-auth-provider.ts).
-                          Only file(s) here may import the actual provider SDK.
+  drizzle/               Drizzle-specific schema and repository files.
+                          Only infrastructure files may import the actual provider SDK.
 ui/
   actions/               one Next.js Server Action per file, named after the action
                           (sign-in.ts, not auth.actions.ts)
+  queries/               server-only UI data layer for Server Components; authenticates
+                          and authorizes access, invokes use-cases, and handles delivery
+                          concerns such as route validation and redirects
   components/            React components
   hooks/                 client hooks that adapt an action to whatever a React API
                           needs (e.g. useActionState's (prevState, formData) contract)
-index.ts                 composition root + the feature's only public barrel
+  lib/                   UI delivery helpers, including routes, navigation, validation,
+                          and revalidation utilities
+composition.ts           internal server-only composition root wiring adapters into use-cases
+index.ts                 universal public barrel, safe to import from server and client
+server.ts                optional server-only public barrel
+client.ts                optional client-only public barrel for browser-only APIs
 ```
 
 `src/shared/` (cross-feature, not a feature itself):
@@ -58,15 +67,23 @@ ui/                      generic, business-agnostic UI kit — shadcn's own CLI-
                           components.json's `hooks` alias points here.
   lib/                   supporting utilities (cn() in lib/utils.ts).
                           components.json's `lib`/`utils` aliases point here.
-index.ts                 single public barrel for shared/
+index.ts                 universal public barrel, safe to import from server and client
+server.ts                optional server-only public barrel
+client.ts                optional client-only public barrel for browser-only APIs
 ```
 
 ### Import rules
 
-- Crossing OUT of a feature (e.g. from `app/`) always goes through that feature's `index.ts`. Never reach into a feature's `domain/`, `application/`, `infrastructure/`, or `ui/` from outside.
-- Crossing OUT of `shared/` works the same way: only `@/shared` (the barrel), never a deep path like `@/shared/infrastructure/env`.
+- A feature or `shared/` can expose up to three public barrels. Create only the barrels that have meaningful exports:
+    - `index.ts` is universal. Server and Client Components may import it, so it must not import or re-export modules marked with `server-only` or `client-only`.
+    - `server.ts` starts with `import 'server-only';`. A feature exposes only the smallest intentional public surface of server-only queries and cross-feature services; its composition root, adapters, and providers stay internal. `shared/server.ts` exposes only platform services intentionally shared with features.
+    - `client.ts` starts with `import 'client-only';`. It exposes browser-only hooks and utilities that must never be imported by Server Components.
+- Crossing OUT of a feature (e.g. from `app/`) always uses `@/features/<feature>`, `@/features/<feature>/server`, or `@/features/<feature>/client` according to the runtime boundary. Never reach into a feature's `domain/`, `application/`, `infrastructure/`, or `ui/` from outside.
+- Crossing OUT of `shared/` works the same way: use `@/shared`, `@/shared/server`, or `@/shared/client`, never a deep path like `@/shared/infrastructure/env`.
 - Within a feature or within `shared/`, sibling internal files import each other directly (e.g. `ui/actions/sign-in.ts` imports `AuthErrorCode` straight from `../../domain/errors`, not through the feature's own barrel). The barrel is the feature's public surface, not a mandatory hop for every internal import.
-- The composition root (wiring an adapter into use-cases) lives in the feature's `index.ts`. Whether the adapter is built once as a module-level singleton or fresh per request depends on the provider (Neon Auth's `auth` object is a singleton that reads request context lazily per call; a provider without that trick needs a fresh client per request instead).
+- A module containing `'use client'` is not automatically appropriate for `client.ts`. React Client Components can be imported and rendered by Server Components, so reusable UI components belong in the universal `index.ts`. Use `client.ts` for APIs such as hooks that directly depend on browser or client runtime behavior.
+- A `'use server'` action may be re-exported from `index.ts` because Next.js exposes it to Client Components as a callable server reference. Its underlying use-case, adapter, and provider remain internal behind `composition.ts`.
+- The composition root (wiring an adapter into use-cases) lives in the feature's internal, server-only `composition.ts`. Server Actions and queries import composed implementations from there, while `server.ts` is only the public server barrel. Whether an adapter is built once as a module-level singleton or fresh per request depends on the provider (Neon Auth's `auth` object is a singleton that reads request context lazily per call; a provider without that trick needs a fresh client per request instead).
 
 ### Errors
 
@@ -82,12 +99,23 @@ index.ts                 single public barrel for shared/
 - No classes. Adapters and factories are `export function createX(...) { return {...} }` or `export const` only when unavoidable — plain object literals, not `class`.
 - `type` over `interface`, everywhere.
 - Let TypeScript infer return types on use-case factories and their returned closures instead of annotating them explicitly — the port type already fully determines the shape.
+- Name operation payloads `data`, not `input`; use type names such as `CreateClientData`, not `CreateClientInput`.
 - No comments in the code. If something needs explaining, make the code itself clearer instead.
 - Server Actions: one per file, file named after the action (`sign-in.ts`), the exported action function takes only `(formData: FormData)` — no `prevState` parameter on the action itself.
 - Client hooks (`ui/hooks/`) are what adapt a plain action into whatever contract a React API demands (e.g. wrapping it into `useActionState`'s `(prevState, formData)` shape). That adaptation never leaks into the action itself.
 - Hooks return a plain object (`{ state, formAction, isPending }`), never a tuple.
 - Components never import a Server Action directly — always through the corresponding hook.
-- Validate `FormData` inside the Server Action with Zod; the schema is defined locally in that action's file, not shared.
+- Server Actions pass `FormData` to feature-local validators in `ui/lib/validation.ts`.
+  Validators own Zod schemas and map Zod errors to plain field-error objects; Server Actions
+  do not import Zod or depend on its result/error API.
+- Pages follow the same validation boundary and do not import Zod. Feature route construction
+  lives in universal `ui/lib/routes.ts`, while calls to Next.js `redirect()` live in server-only
+  `ui/lib/navigation.ts`. Pages, components, and actions use these helpers instead of literal paths.
+- Server Components read feature data through `ui/queries/`, not application use-cases directly.
+  Queries verify the current user and scope reads to that user before invoking a use-case. Like
+  Server Actions, queries import composed use-case implementations from the feature's internal
+  `composition.ts`. Queries return explicit, minimal DTOs instead of forwarding domain entities
+  directly across the Server-to-Client boundary.
 - File names: kebab-case for anything multi-word (`sign-in.ts`, `auth-provider.ts`, `login-form.tsx`). Single-word files are unaffected. Next.js–mandated filenames (`page.tsx`, `layout.tsx`, `middleware.ts`) keep their required names as-is.
 - Avoid baking generic pattern words into names where possible (avoid "-repository", "-use-case" suffixes) — but a name that's genuinely the concept (e.g. `AuthProvider`) is fine.
 
@@ -115,7 +143,7 @@ The installed Next.js version (16.3.4, Turbopack) accepts and compiles `proxy.ts
 
 ## Known gotcha: auth.middleware() crashes on Edge
 
-`auth.middleware({ loginUrl: '/login' })` (from `@neondatabase/auth/next/server`) looks like the obvious way to protect `/dashboard`, matching the library's own documented example — **do not add it to `middleware.ts`**. Its bundle pulls in `node:fs`, which does not exist in the Edge runtime that classic `middleware.ts` uses by default, and crashes every matched request with `Error: Failed to load external module node:fs` (a 500, confirmed via `next start` + curl, not just a build-time warning). Explicitly opting the file into `export const runtime = 'nodejs'` does not fix it either — the middleware silently disappears from `middleware-manifest.json` entirely and never runs (same empty-manifest symptom as the `proxy.ts` bug above, different cause). `proxy.ts` isn't a fallback here either, per its own gotcha. Net effect: there is currently no working way to run Neon Auth's own middleware-based route protection in this project's toolchain (Next 16.3.4 + Turbopack + `@neondatabase/auth` 0.5.0-beta) — rely solely on the page-level `getCurrentUser()` + `redirect()` check (already in every protected page) instead of adding `middleware.ts` back for this. Re-verify at runtime (not just a clean build) before ever re-adding it.
+`auth.middleware({ loginUrl: '/login' })` (from `@neondatabase/auth/next/server`) looks like the obvious way to protect `/dashboard`, matching the library's own documented example — **do not add it to `middleware.ts`**. Its bundle pulls in `node:fs`, which does not exist in the Edge runtime that classic `middleware.ts` uses by default, and crashes every matched request with `Error: Failed to load external module node:fs` (a 500, confirmed via `next start` + curl, not just a build-time warning). Explicitly opting the file into `export const runtime = 'nodejs'` does not fix it either — the middleware silently disappears from `middleware-manifest.json` entirely and never runs (same empty-manifest symptom as the `proxy.ts` bug above, different cause). `proxy.ts` isn't a fallback here either, per its own gotcha. Net effect: there is currently no working way to run Neon Auth's own middleware-based route protection in this project's toolchain (Next 16.3.4 + Turbopack + `@neondatabase/auth` 0.5.0-beta) — rely solely on query-level `getAuthenticatedUserOrRedirect()` checks instead of adding `middleware.ts` back for this. Re-verify at runtime (not just a clean build) before ever re-adding it.
 
 ## Git
 
