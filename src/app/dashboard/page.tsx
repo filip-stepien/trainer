@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { signOutAction } from '@/features/auth';
 import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 import { getClientListPath } from '@/features/clients';
+import { getExerciseListPath } from '@/features/exercises';
 import { Button } from '@/shared';
 
 export default function DashboardPage() {
@@ -27,6 +28,13 @@ async function DashboardAccount() {
             </p>
             <Button render={<Link href={getClientListPath()} />} nativeButton={false}>
                 Podopieczni
+            </Button>
+            <Button
+                variant='outline'
+                render={<Link href={getExerciseListPath()} />}
+                nativeButton={false}
+            >
+                Biblioteka ćwiczeń
             </Button>
             <form action={signOutAction}>
                 <button

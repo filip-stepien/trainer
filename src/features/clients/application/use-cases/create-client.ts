@@ -1,8 +1,13 @@
-import type { ClientRepository, CreateClientParams } from '../ports/client-repository';
+import type { ClientRepository, CreateClientData } from '../ports/client-repository';
+
+export type CreateClientParams = {
+    coachId: string;
+    data: CreateClientData;
+};
 
 export function createClientFactory({ clientRepository }: { clientRepository: ClientRepository }) {
     return ({ coachId, data }: CreateClientParams) =>
-        clientRepository.create({
+        clientRepository.save({
             coachId,
             data: {
                 ...data,

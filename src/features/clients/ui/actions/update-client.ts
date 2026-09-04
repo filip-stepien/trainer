@@ -13,11 +13,17 @@ export type UpdateClientActionState = {
     fieldErrors?: UpdateClientFieldErrors;
 };
 
+const UpdateClientActionError = {
+    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
+    EmailAlreadyInUse: 'Podopieczny z tym adresem e-mail już istnieje.',
+    NotFound: 'Nie znaleziono podopiecznego.'
+} as const;
+
 export async function updateClientAction(formData: FormData): Promise<UpdateClientActionState> {
     const user = await getCurrentUser();
 
     if (!user) {
-        return { error: 'Sesja wygasła. Zaloguj się ponownie.' };
+        return { error: UpdateClientActionError.SessionExpired };
     }
 
     const validation = validateUpdateClientForm(formData);
@@ -31,10 +37,10 @@ export async function updateClientAction(formData: FormData): Promise<UpdateClie
 
     if (!result.ok) {
         if (result.error === ClientErrorCode.EmailAlreadyInUse) {
-            return { fieldErrors: { email: ['Podopieczny z tym adresem e-mail już istnieje.'] } };
+            return { fieldErrors: { email: [UpdateClientActionError.EmailAlreadyInUse] } };
         }
         if (result.error === ClientErrorCode.NotFound) {
-            return { error: 'Nie znaleziono podopiecznego.' };
+            return { error: UpdateClientActionError.NotFound };
         }
     }
 

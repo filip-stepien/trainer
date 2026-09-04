@@ -100,8 +100,10 @@ client.ts                optional client-only public barrel for browser-only API
 - `type` over `interface`, everywhere.
 - Let TypeScript infer return types on use-case factories and their returned closures instead of annotating them explicitly — the port type already fully determines the shape.
 - Name operation payloads `data`, not `input`; use type names such as `CreateClientData`, not `CreateClientInput`.
+- Repository method names describe only the persistence operation: use `save`, `findAll`/`findPage`, `findById`, `updateById`, and `updateStatusById`. Pass lookup predicates, ownership scope, optional search conditions, and pagination through typed `filter` and `pagination` objects instead of encoding a query expression in the method name. The application layer decides which filters to use; repository names do not introduce authorization or other business concepts.
 - No comments in the code. If something needs explaining, make the code itself clearer instead.
 - Server Actions: one per file, file named after the action (`sign-in.ts`), the exported action function takes only `(formData: FormData)` — no `prevState` parameter on the action itself.
+- A Server Action that returns errors defines its own local error-message dictionary and references only that dictionary from the action body; do not inline error message strings in control-flow branches.
 - Client hooks (`ui/hooks/`) are what adapt a plain action into whatever contract a React API demands (e.g. wrapping it into `useActionState`'s `(prevState, formData)` shape). That adaptation never leaks into the action itself.
 - Hooks return a plain object (`{ state, formAction, isPending }`), never a tuple.
 - Components never import a Server Action directly — always through the corresponding hook.

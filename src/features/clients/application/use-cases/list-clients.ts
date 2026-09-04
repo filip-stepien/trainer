@@ -1,5 +1,9 @@
-import type { ClientRepository, FindClientsByCoachParams } from '../ports/client-repository';
+import type { ClientRepository } from '../ports/client-repository';
+
+export type ListClientsParams = {
+    coachId: string;
+};
 
 export function listClientsFactory({ clientRepository }: { clientRepository: ClientRepository }) {
-    return ({ coachId }: FindClientsByCoachParams) => clientRepository.findAllByCoach({ coachId });
+    return ({ coachId }: ListClientsParams) => clientRepository.findAll({ filter: { coachId } });
 }

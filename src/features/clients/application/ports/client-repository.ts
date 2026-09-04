@@ -15,29 +15,33 @@ export type UpdateClientData = CreateClientData & {
     status: ClientStatus;
 };
 
-export type CreateClientParams = {
+export type SaveClientParams = {
     coachId: string;
     data: CreateClientData;
 };
 
-export type FindClientsByCoachParams = {
+export type ClientFilter = {
     coachId: string;
+};
+
+export type FindClientsParams = {
+    filter: ClientFilter;
 };
 
 export type FindClientByIdParams = {
-    coachId: string;
     clientId: string;
+    filter: ClientFilter;
 };
 
-export type UpdateClientParams = {
-    coachId: string;
+export type UpdateClientByIdParams = {
     clientId: string;
     data: UpdateClientData;
+    filter: ClientFilter;
 };
 
 export type ClientRepository = {
-    create: (params: CreateClientParams) => Promise<Result<Client, ClientErrorCode>>;
-    findAllByCoach: (params: FindClientsByCoachParams) => Promise<Client[]>;
+    save: (params: SaveClientParams) => Promise<Result<Client, ClientErrorCode>>;
+    findAll: (params: FindClientsParams) => Promise<Client[]>;
     findById: (params: FindClientByIdParams) => Promise<Client | null>;
-    update: (params: UpdateClientParams) => Promise<Result<Client, ClientErrorCode>>;
+    updateById: (params: UpdateClientByIdParams) => Promise<Result<Client, ClientErrorCode>>;
 };

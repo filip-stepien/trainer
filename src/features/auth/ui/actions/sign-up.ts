@@ -9,7 +9,7 @@ export type SignUpActionState = {
     error?: string;
 };
 
-const errorMessages: Partial<Record<AuthErrorCode, string>> = {
+const SignUpActionError: Partial<Record<AuthErrorCode, string>> = {
     [AuthErrorCode.EmailAlreadyInUse]: 'Konto z tym adresem e-mail już istnieje.',
     [AuthErrorCode.WeakPassword]: 'Hasło jest zbyt słabe. Wybierz silniejsze.',
     [AuthErrorCode.RateLimited]: 'Zbyt wiele prób. Spróbuj ponownie za chwilę.',
@@ -28,7 +28,9 @@ export async function signUpAction(formData: FormData): Promise<SignUpActionStat
     const result = await signUp({ name: `${firstName} ${lastName}`, email, password });
 
     if (!result.ok) {
-        return { error: errorMessages[result.error] ?? errorMessages[AuthErrorCode.Unknown] };
+        return {
+            error: SignUpActionError[result.error] ?? SignUpActionError[AuthErrorCode.Unknown]
+        };
     }
 
     redirectToHome();

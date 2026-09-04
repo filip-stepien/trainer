@@ -49,18 +49,37 @@ po stronie aplikacji i dostępne wyłącznie po sprawdzeniu uprawnień.
 
 ## Biblioteka ćwiczeń
 
-Trener tworzy własną bibliotekę ćwiczeń. Definicja ćwiczenia zawiera:
+Biblioteka trenera i globalny katalog są dostępne na jednym ekranie w osobnych zakładkach.
+Definicja ćwiczenia zawiera:
 
 - nazwę,
-- opis techniki,
-- domyślne wskazówki,
-- link do materiału instruktażowego,
-- kategorię lub partię mięśniową,
-- wymagany sprzęt.
+- instrukcję techniczną,
+- opcjonalny link do materiału instruktażowego,
+- status aktywny albo archiwalny.
 
-Definicja w bibliotece jest niezależna od użycia ćwiczenia w planie. Dodając ćwiczenie
-do treningu, trener może nadpisać jego instrukcję lub link tylko dla tego konkretnego
-planu, bez wpływu na bibliotekę i inne plany.
+Ćwiczenia bazowe są seedowane wyłącznie z angielskich nazw pochodzących z projektu
+[`hasaneyldrm/exercises-dataset`](https://github.com/hasaneyldrm/exercises-dataset). Nie importujemy
+obrazów, GIF-ów, instrukcji ani pozostałych metadanych. Są współdzielone przez wszystkich trenerów
+i dostępne tylko do odczytu w katalogu. Dodanie pozycji z katalogu tworzy przypisaną do trenera
+kopię nazwy, instrukcji i linku. Kopię można niezależnie edytować oraz archiwizować, a późniejsze
+zmiany katalogu nie nadpisują zmian trenera. Ponowne dodanie istniejącej kopii nie tworzy duplikatu,
+lecz przywraca ją, jeśli była zarchiwizowana.
+
+Trener może również utworzyć ćwiczenie własne bez źródła katalogowego. Kopie z katalogu i
+ćwiczenia własne składają się na jego bibliotekę i podlegają tym samym regułom edycji. Wszystkie
+warianty są przechowywane w jednej tabeli: `coachId` określa właściciela, `sourceExerciseId` wiąże
+kopię ze źródłem, a `isCustom` odróżnia ćwiczenie utworzone ręcznie. Informacje licencyjne znajdują się w
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+Definicja w bibliotece jest niezależna od użycia ćwiczenia w planie. Serie, powtórzenia,
+tempo, RIR, przerwy i komentarz trenera należą do konkretnego użycia ćwiczenia w planie,
+a nie do biblioteki. Opublikowana wersja planu przechowuje snapshot nazwy, instrukcji i
+linku oraz identyfikator ćwiczenia źródłowego. Dzięki temu edycja biblioteki nie zmienia
+historycznych planów.
+
+Ćwiczenia są archiwizowane zamiast trwale usuwane, aby zachować ich powiązania z planami.
+Kategorie, partie mięśniowe, sprzęt, warianty i własne pliki multimedialne pozostają poza
+pierwszą wersją biblioteki.
 
 ## Bloki treningowe
 

@@ -9,7 +9,7 @@ export type SignInActionState = {
     error?: string;
 };
 
-const errorMessages: Partial<Record<AuthErrorCode, string>> = {
+const SignInActionError: Partial<Record<AuthErrorCode, string>> = {
     [AuthErrorCode.InvalidCredentials]: 'Nieprawidłowy adres e-mail lub hasło.',
     [AuthErrorCode.RateLimited]: 'Zbyt wiele prób. Spróbuj ponownie za chwilę.',
     [AuthErrorCode.Unknown]: 'Coś poszło nie tak. Spróbuj ponownie.'
@@ -25,7 +25,9 @@ export async function signInAction(formData: FormData): Promise<SignInActionStat
     const result = await signIn(validation.data);
 
     if (!result.ok) {
-        return { error: errorMessages[result.error] ?? errorMessages[AuthErrorCode.Unknown] };
+        return {
+            error: SignInActionError[result.error] ?? SignInActionError[AuthErrorCode.Unknown]
+        };
     }
 
     redirectToDashboard();

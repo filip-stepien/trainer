@@ -13,11 +13,17 @@ export type CreateClientActionState = {
     fieldErrors?: CreateClientFieldErrors;
 };
 
+const CreateClientActionError = {
+    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
+    EmailAlreadyInUse: 'Podopieczny z tym adresem e-mail już istnieje.',
+    Unknown: 'Nie udało się dodać podopiecznego.'
+} as const;
+
 export async function createClientAction(formData: FormData): Promise<CreateClientActionState> {
     const user = await getCurrentUser();
 
     if (!user) {
-        return { error: 'Sesja wygasła. Zaloguj się ponownie.' };
+        return { error: CreateClientActionError.SessionExpired };
     }
 
     const validation = validateCreateClientForm(formData);
@@ -30,9 +36,9 @@ export async function createClientAction(formData: FormData): Promise<CreateClie
 
     if (!result.ok) {
         if (result.error === ClientErrorCode.EmailAlreadyInUse) {
-            return { fieldErrors: { email: ['Podopieczny z tym adresem e-mail już istnieje.'] } };
+            return { fieldErrors: { email: [CreateClientActionError.EmailAlreadyInUse] } };
         }
-        return { error: 'Nie udało się dodać podopiecznego.' };
+        return { error: CreateClientActionError.Unknown };
     }
 
     revalidateClientListNow();
