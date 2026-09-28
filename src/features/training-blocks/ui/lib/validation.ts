@@ -32,6 +32,23 @@ function validateTrainingDayExerciseTarget(
     }
 }
 
+const clientIdSchema = z.uuid('Nieprawidłowy identyfikator podopiecznego.');
+
+const trainingBlockIdSchema = z.uuid('Nieprawidłowy identyfikator bloku treningowego.');
+
+const trainingDayIdSchema = z.uuid('Nieprawidłowy identyfikator dnia treningowego.');
+
+const trainingDayExerciseIdSchema = z.uuid('Nieprawidłowy identyfikator ćwiczenia w planie.');
+
+const trainingDayRefSchema = z.object({
+    trainingBlockId: trainingBlockIdSchema,
+    trainingDayId: trainingDayIdSchema
+});
+
+const trainingDayExerciseRefSchema = trainingDayRefSchema.extend({
+    trainingDayExerciseId: trainingDayExerciseIdSchema
+});
+
 const trainingBlockSchema = z.object({
     name: z.string().trim().min(1, 'Podaj nazwę bloku.').max(150, 'Nazwa jest zbyt długa.'),
     startDate: z.iso.date('Podaj prawidłową datę rozpoczęcia.'),
@@ -52,16 +69,12 @@ const trainingBlockSchema = z.object({
 });
 
 const createTrainingBlockSchema = trainingBlockSchema.extend({
-    clientId: z.uuid('Nieprawidłowy identyfikator podopiecznego.')
+    clientId: clientIdSchema
 });
 
 const updateTrainingBlockSchema = trainingBlockSchema.extend({
-    trainingBlockId: z.uuid('Nieprawidłowy identyfikator bloku treningowego.')
+    trainingBlockId: trainingBlockIdSchema
 });
-
-const trainingBlockIdSchema = z.uuid();
-
-const clientIdSchema = z.uuid();
 
 const trainingDaySchema = z.object({
     name: z.string().trim().min(1, 'Podaj nazwę dnia.').max(150, 'Nazwa jest zbyt długa.'),
@@ -73,23 +86,16 @@ const trainingDaySchema = z.object({
 });
 
 const createTrainingDaySchema = trainingDaySchema.extend({
-    trainingBlockId: z.uuid('Nieprawidłowy identyfikator bloku treningowego.')
+    trainingBlockId: trainingBlockIdSchema
 });
 
-const updateTrainingDaySchema = createTrainingDaySchema.extend({
-    trainingDayId: z.uuid('Nieprawidłowy identyfikator dnia treningowego.')
-});
+const updateTrainingDaySchema = trainingDaySchema.extend(trainingDayRefSchema.shape);
 
-const moveTrainingDaySchema = z.object({
-    trainingBlockId: z.uuid('Nieprawidłowy identyfikator bloku treningowego.'),
-    trainingDayId: z.uuid('Nieprawidłowy identyfikator dnia treningowego.'),
+const moveTrainingDaySchema = trainingDayRefSchema.extend({
     direction: z.enum([TrainingDayMoveDirection.Up, TrainingDayMoveDirection.Down])
 });
 
-const deleteTrainingDaySchema = z.object({
-    trainingBlockId: z.uuid('Nieprawidłowy identyfikator bloku treningowego.'),
-    trainingDayId: z.uuid('Nieprawidłowy identyfikator dnia treningowego.')
-});
+const deleteTrainingDaySchema = trainingDayRefSchema;
 
 const trainingDayExercisePrescriptionSchema = z.object({
     sets: optionalNumber(
@@ -146,33 +152,30 @@ const trainingDayExercisePrescriptionSchema = z.object({
 
 const addTrainingDayExerciseSchema = trainingDayExercisePrescriptionSchema
     .extend({
-        trainingBlockId: z.uuid('Nieprawidłowy identyfikator bloku treningowego.'),
-        trainingDayId: z.uuid('Nieprawidłowy identyfikator dnia treningowego.'),
+        ...trainingDayRefSchema.shape,
         exerciseId: z.uuid('Wybierz ćwiczenie z biblioteki.'),
         section: z.enum([TrainingDayExerciseSection.Warmup, TrainingDayExerciseSection.Main])
     })
     .superRefine(validateTrainingDayExerciseTarget);
 
 const updateTrainingDayExerciseSchema = trainingDayExercisePrescriptionSchema
-    .extend({
-        trainingBlockId: z.uuid('Nieprawidłowy identyfikator bloku treningowego.'),
-        trainingDayId: z.uuid('Nieprawidłowy identyfikator dnia treningowego.'),
-        trainingDayExerciseId: z.uuid('Nieprawidłowy identyfikator ćwiczenia w planie.')
-    })
+    .extend(trainingDayExerciseRefSchema.shape)
     .superRefine(validateTrainingDayExerciseTarget);
 
-const moveTrainingDayExerciseSchema = z.object({
-    trainingBlockId: z.uuid('Nieprawidłowy identyfikator bloku treningowego.'),
-    trainingDayId: z.uuid('Nieprawidłowy identyfikator dnia treningowego.'),
-    trainingDayExerciseId: z.uuid('Nieprawidłowy identyfikator ćwiczenia w planie.'),
+const moveTrainingDayExerciseSchema = trainingDayExerciseRefSchema.extend({
     direction: z.enum([TrainingDayExerciseMoveDirection.Up, TrainingDayExerciseMoveDirection.Down])
 });
 
-const deleteTrainingDayExerciseSchema = z.object({
-    trainingBlockId: z.uuid('Nieprawidłowy identyfikator bloku treningowego.'),
-    trainingDayId: z.uuid('Nieprawidłowy identyfikator dnia treningowego.'),
-    trainingDayExerciseId: z.uuid('Nieprawidłowy identyfikator ćwiczenia w planie.')
-});
+const deleteTrainingDayExerciseSchema = trainingDayExerciseRefSchema;
+
+type TrainingDayRefFieldErrors = {
+    trainingBlockId?: string[];
+    trainingDayId?: string[];
+};
+
+type TrainingDayExerciseRefFieldErrors = TrainingDayRefFieldErrors & {
+    trainingDayExerciseId?: string[];
+};
 
 export type TrainingBlockFieldErrors = {
     name?: string[];
@@ -198,20 +201,13 @@ export type CreateTrainingDayFieldErrors = TrainingDayFieldErrors & {
     trainingBlockId?: string[];
 };
 
-export type UpdateTrainingDayFieldErrors = CreateTrainingDayFieldErrors & {
-    trainingDayId?: string[];
-};
+export type UpdateTrainingDayFieldErrors = TrainingDayFieldErrors & TrainingDayRefFieldErrors;
 
-export type MoveTrainingDayFieldErrors = {
-    trainingBlockId?: string[];
-    trainingDayId?: string[];
+export type MoveTrainingDayFieldErrors = TrainingDayRefFieldErrors & {
     direction?: string[];
 };
 
-export type DeleteTrainingDayFieldErrors = {
-    trainingBlockId?: string[];
-    trainingDayId?: string[];
-};
+export type DeleteTrainingDayFieldErrors = TrainingDayRefFieldErrors;
 
 export type TrainingDayExerciseFieldErrors = {
     sets?: string[];
@@ -225,31 +221,20 @@ export type TrainingDayExerciseFieldErrors = {
     notes?: string[];
 };
 
-export type AddTrainingDayExerciseFieldErrors = TrainingDayExerciseFieldErrors & {
-    trainingBlockId?: string[];
-    trainingDayId?: string[];
-    exerciseId?: string[];
-    section?: string[];
-};
+export type AddTrainingDayExerciseFieldErrors = TrainingDayExerciseFieldErrors &
+    TrainingDayRefFieldErrors & {
+        exerciseId?: string[];
+        section?: string[];
+    };
 
-export type UpdateTrainingDayExerciseFieldErrors = TrainingDayExerciseFieldErrors & {
-    trainingBlockId?: string[];
-    trainingDayId?: string[];
-    trainingDayExerciseId?: string[];
-};
+export type UpdateTrainingDayExerciseFieldErrors = TrainingDayExerciseFieldErrors &
+    TrainingDayExerciseRefFieldErrors;
 
-export type MoveTrainingDayExerciseFieldErrors = {
-    trainingBlockId?: string[];
-    trainingDayId?: string[];
-    trainingDayExerciseId?: string[];
+export type MoveTrainingDayExerciseFieldErrors = TrainingDayExerciseRefFieldErrors & {
     direction?: string[];
 };
 
-export type DeleteTrainingDayExerciseFieldErrors = {
-    trainingBlockId?: string[];
-    trainingDayId?: string[];
-    trainingDayExerciseId?: string[];
-};
+export type DeleteTrainingDayExerciseFieldErrors = TrainingDayExerciseRefFieldErrors;
 
 export function validateClientId({ clientId }: { clientId: string }) {
     const result = clientIdSchema.safeParse(clientId);

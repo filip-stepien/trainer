@@ -1,21 +1,15 @@
 'use server';
 
-import { getCurrentUser } from '@/features/auth/server';
+import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
 import { addTrainingDayExercise } from '../../composition';
 import { TrainingBlockErrorCode } from '../../domain/errors';
+import { TrainingBlockActionMessages, TrainingBlockNotFoundMessages } from '../lib/messages';
 import { revalidateTrainingBlockNow } from '../lib/revalidation';
 import {
     type AddTrainingDayExerciseFieldErrors,
     validateAddTrainingDayExerciseForm
 } from '../lib/validation';
-
-const AddTrainingDayExerciseActionMessages = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    ExerciseNotFound: 'Nie znaleziono aktywnego ćwiczenia w Twojej bibliotece.',
-    TrainingDayNotFound: 'Nie znaleziono dnia w roboczej wersji bloku.',
-    Added: 'Ćwiczenie zostało dodane.'
-} as const;
 
 export type AddTrainingDayExerciseActionState = {
     error?: string;
@@ -26,11 +20,7 @@ export type AddTrainingDayExerciseActionState = {
 export async function addTrainingDayExerciseAction(
     formData: FormData
 ): Promise<AddTrainingDayExerciseActionState> {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        return { error: AddTrainingDayExerciseActionMessages.SessionExpired };
-    }
+    const user = await getAuthenticatedUserOrRedirect();
 
     const validation = validateAddTrainingDayExerciseForm(formData);
 
@@ -50,11 +40,11 @@ export async function addTrainingDayExerciseAction(
         return {
             error:
                 result.error === TrainingBlockErrorCode.ExerciseNotFound
-                    ? AddTrainingDayExerciseActionMessages.ExerciseNotFound
-                    : AddTrainingDayExerciseActionMessages.TrainingDayNotFound
+                    ? TrainingBlockNotFoundMessages.LibraryExercise
+                    : TrainingBlockNotFoundMessages.TrainingDay
         };
     }
 
     revalidateTrainingBlockNow({ trainingBlockId });
-    return { success: AddTrainingDayExerciseActionMessages.Added };
+    return { success: TrainingBlockActionMessages.TrainingDayExerciseAdded };
 }

@@ -10,6 +10,8 @@ import {
     type ExerciseListView as ExerciseListViewValue
 } from './routes';
 
+const exerciseIdSchema = z.uuid('Nieprawidłowy identyfikator ćwiczenia.');
+
 const exerciseSchema = z.object({
     name: z.string().trim().min(1, 'Podaj nazwę ćwiczenia.').max(150, 'Nazwa jest zbyt długa.'),
     instructions: z
@@ -28,19 +30,17 @@ const exerciseSchema = z.object({
 });
 
 const updateExerciseSchema = exerciseSchema.extend({
-    exerciseId: z.uuid('Nieprawidłowy identyfikator ćwiczenia.')
+    exerciseId: exerciseIdSchema
 });
 
 const setExerciseStatusSchema = z.object({
-    exerciseId: z.uuid('Nieprawidłowy identyfikator ćwiczenia.'),
+    exerciseId: exerciseIdSchema,
     status: z.enum([ExerciseStatus.Active, ExerciseStatus.Archived])
 });
 
 const addExerciseFromCatalogSchema = z.object({
     sourceExerciseId: z.guid('Nieprawidłowy identyfikator ćwiczenia.')
 });
-
-const exerciseIdSchema = z.uuid();
 
 const exerciseListSearchParamsSchema = z.object({
     page: z.coerce.number().int().min(1).catch(1),

@@ -1,18 +1,13 @@
 'use server';
 
-import { getCurrentUser } from '@/features/auth/server';
+import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
 import { ClientErrorCode } from '../../domain/errors';
 import { createClient } from '../../composition';
+import { ClientActionMessages, ClientErrorMessages } from '../lib/messages';
 import { redirectToClient } from '../lib/navigation';
 import { revalidateClientListNow } from '../lib/revalidation';
 import { type CreateClientFieldErrors, validateCreateClientForm } from '../lib/validation';
-
-const CreateClientActionMessages = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    EmailAlreadyInUse: 'Podopieczny z tym adresem e-mail już istnieje.',
-    Unknown: 'Nie udało się dodać podopiecznego.'
-} as const;
 
 export type CreateClientActionState = {
     error?: string;
@@ -20,11 +15,7 @@ export type CreateClientActionState = {
 };
 
 export async function createClientAction(formData: FormData): Promise<CreateClientActionState> {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        return { error: CreateClientActionMessages.SessionExpired };
-    }
+    const user = await getAuthenticatedUserOrRedirect();
 
     const validation = validateCreateClientForm(formData);
 
@@ -36,9 +27,9 @@ export async function createClientAction(formData: FormData): Promise<CreateClie
 
     if (!result.ok) {
         if (result.error === ClientErrorCode.EmailAlreadyInUse) {
-            return { fieldErrors: { email: [CreateClientActionMessages.EmailAlreadyInUse] } };
+            return { fieldErrors: { email: [ClientErrorMessages[result.error]] } };
         }
-        return { error: CreateClientActionMessages.Unknown };
+        return { error: ClientActionMessages.CreateFailed };
     }
 
     revalidateClientListNow();

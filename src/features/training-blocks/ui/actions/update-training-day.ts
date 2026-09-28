@@ -1,19 +1,14 @@
 'use server';
 
-import { getCurrentUser } from '@/features/auth/server';
+import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
 import { updateTrainingDay } from '../../composition';
+import { TrainingBlockActionMessages, TrainingBlockNotFoundMessages } from '../lib/messages';
 import { revalidateTrainingBlockNow } from '../lib/revalidation';
 import {
     type UpdateTrainingDayFieldErrors,
     validateUpdateTrainingDayForm
 } from '../lib/validation';
-
-const UpdateTrainingDayActionMessages = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    NotFound: 'Nie znaleziono dnia w roboczej wersji bloku.',
-    Saved: 'Dzień treningowy został zapisany.'
-} as const;
 
 export type UpdateTrainingDayActionState = {
     error?: string;
@@ -24,11 +19,7 @@ export type UpdateTrainingDayActionState = {
 export async function updateTrainingDayAction(
     formData: FormData
 ): Promise<UpdateTrainingDayActionState> {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        return { error: UpdateTrainingDayActionMessages.SessionExpired };
-    }
+    const user = await getAuthenticatedUserOrRedirect();
 
     const validation = validateUpdateTrainingDayForm(formData);
 
@@ -45,9 +36,9 @@ export async function updateTrainingDayAction(
     });
 
     if (!result.ok) {
-        return { error: UpdateTrainingDayActionMessages.NotFound };
+        return { error: TrainingBlockNotFoundMessages.TrainingDay };
     }
 
     revalidateTrainingBlockNow({ trainingBlockId });
-    return { success: UpdateTrainingDayActionMessages.Saved };
+    return { success: TrainingBlockActionMessages.TrainingDaySaved };
 }

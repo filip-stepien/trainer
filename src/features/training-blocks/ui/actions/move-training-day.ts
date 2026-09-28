@@ -1,15 +1,11 @@
 'use server';
 
-import { getCurrentUser } from '@/features/auth/server';
+import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
 import { moveTrainingDay } from '../../composition';
+import { TrainingBlockNotFoundMessages } from '../lib/messages';
 import { revalidateTrainingBlockNow } from '../lib/revalidation';
 import { type MoveTrainingDayFieldErrors, validateMoveTrainingDayForm } from '../lib/validation';
-
-const MoveTrainingDayActionMessages = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    NotFound: 'Nie udało się zmienić kolejności dni.'
-} as const;
 
 export type MoveTrainingDayActionState = {
     error?: string;
@@ -19,11 +15,7 @@ export type MoveTrainingDayActionState = {
 export async function moveTrainingDayAction(
     formData: FormData
 ): Promise<MoveTrainingDayActionState> {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        return { error: MoveTrainingDayActionMessages.SessionExpired };
-    }
+    const user = await getAuthenticatedUserOrRedirect();
 
     const validation = validateMoveTrainingDayForm(formData);
 
@@ -34,7 +26,7 @@ export async function moveTrainingDayAction(
     const result = await moveTrainingDay({ coachId: user.id, ...validation.data });
 
     if (!result.ok) {
-        return { error: MoveTrainingDayActionMessages.NotFound };
+        return { error: TrainingBlockNotFoundMessages.TrainingDay };
     }
 
     revalidateTrainingBlockNow({ trainingBlockId: validation.data.trainingBlockId });

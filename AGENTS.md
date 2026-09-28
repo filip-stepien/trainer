@@ -107,7 +107,33 @@ client.ts                optional client-only public barrel for browser-only API
 - Repository method names describe only the persistence operation: use `save`, `findAll`/`findPage`, `findById`, `updateById`, and `updateStatusById`. Pass lookup predicates, ownership scope, optional search conditions, and pagination through typed `filter` and `pagination` objects instead of encoding a query expression in the method name. The application layer decides which filters to use; repository names do not introduce authorization or other business concepts.
 - No comments in the code. If something needs explaining, make the code itself clearer instead.
 - Server Actions: one per file, file named after the action (`sign-in.ts`), the exported action function takes only `(formData: FormData)` — no `prevState` parameter on the action itself.
-- A Server Action keeps every user-facing message it can return — failures and confirmations alike — in one local `<Action>ActionMessages` dictionary, and its body references only that dictionary; never write a message string inline in a control-flow branch. Keys name what happened (`SessionExpired`, `NotFound`, `Saved`, `Added`), so the dictionary doubles as a list of the action's outcomes. Where messages map from a domain error code, the dictionary is keyed by that code instead (`Partial<Record<AuthErrorCode, string>>`).
+- Every user-facing message a feature can produce — failures and confirmations alike — lives in that
+  feature's `ui/lib/messages.ts`. A Server Action contains no message string and declares no local
+  dictionary: it references the feature's maps and nothing else. One file per feature therefore holds
+  that feature's entire user-facing vocabulary, and reading it tells you everything the feature can
+  say.
+- `messages.ts` holds up to two kinds of map, each named after what keys it:
+    - `<Feature>ErrorMessages`, an exhaustive `Record<<Feature>ErrorCode, string>`, for wording a
+      domain code determines on its own. An action renders a failed `Result` straight through it
+      (`ExerciseErrorMessages[result.error]`). It is `Record`, never `Partial<Record<...>>` with a
+      `?? Unknown` fallback, so adding a code to the union fails `tsc` instead of silently degrading
+      to an unknown-error message.
+    - `<Feature>ActionMessages`, for everything the UI owns rather than the domain: confirmations,
+      and failures with no domain code behind them. Keys name what happened (`Saved`, `CreateFailed`),
+      qualified by entity only where the feature says it about more than one thing
+      (`TrainingDaySaved` next to `TrainingBlockSaved`).
+- A code whose wording depends on what the action addressed rather than on the code itself cannot be
+  keyed by that code: `TrainingBlockErrorCode.NotFound` means a missing day, exercise or draft
+  depending on the caller, because the repository reports one "no rows matched" for all of them. Such
+  a feature adds a third map keyed by the thing that was not found
+  (`TrainingBlockNotFoundMessages.TrainingDay`) and the action picks the entry naming what it
+  addressed. Do not split the code in the domain to recover the distinction — the repository would
+  need extra queries purely to choose a message.
+- A Server Action needing the current user calls `getAuthenticatedUserOrRedirect()` from
+  `@/features/auth/server` — the same helper queries use — and never re-implements the
+  `getCurrentUser()` + null-check pair. A missing session is a redirect to the login page, not a
+  message rendered above a form the user can no longer submit, so no action owns or repeats a
+  session-expired message.
 - Client hooks (`ui/hooks/`) are what adapt a plain action into whatever contract a React API demands (e.g. wrapping it into `useActionState`'s `(prevState, formData)` shape). That adaptation never leaks into the action itself.
 - Hooks return a plain object (`{ state, formAction, isPending }`), never a tuple.
 - Components never import a Server Action directly — always through the corresponding hook.
@@ -116,6 +142,16 @@ client.ts                optional client-only public barrel for browser-only API
   do not import Zod or depend on its result/error API. Zod 4 deprecated the `ZodError` methods:
   read issues with the standalone `z.flattenError(error)` or `z.treeifyError(error)`, never
   `error.flatten()` or `error.format()`.
+- A failing validator returns `fieldErrors` keyed by field, never a single pre-formatted message
+  for the action to forward. Field-rule wording belongs to the schema that produces it and outcome
+  wording to `<Action>ActionMessages`, so an action's `error` always comes from its own dictionary
+  and its `fieldErrors` always come from the validator.
+- A field rule reused by more than one schema is hoisted into a named field schema
+  (`trainingBlockIdSchema`, `emailSchema`), and a group of fields that recurs together into a
+  shared object schema (`trainingDayRefSchema`) that the composite schemas pull in via
+  `.extend(refSchema.shape)`. The matching `*FieldErrors` types compose the same way, so a message
+  and the rule it belongs to are written once per feature. A validator that discards the message
+  (route-parameter checks) reuses the same field schema rather than declaring a bare duplicate.
 - Pages follow the same validation boundary and do not import Zod. Feature route construction
   lives in universal `ui/lib/routes.ts`, while calls to Next.js `redirect()` live in server-only
   `ui/lib/navigation.ts`. Pages, components, and actions use these helpers instead of literal paths.

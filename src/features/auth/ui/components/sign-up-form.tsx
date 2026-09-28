@@ -18,8 +18,12 @@ export function SignUpForm() {
                         type='text'
                         required
                         autoComplete='given-name'
+                        aria-invalid={Boolean(state.fieldErrors?.firstName)}
                         className='rounded-md border border-black/10 px-3 py-2 text-sm dark:border-white/20'
                     />
+                    {state.fieldErrors?.firstName ? (
+                        <p className='text-sm text-red-600'>{state.fieldErrors.firstName[0]}</p>
+                    ) : null}
                 </div>
                 <div className='flex flex-1 flex-col gap-1'>
                     <label htmlFor='lastName' className='text-sm font-medium'>
@@ -31,8 +35,12 @@ export function SignUpForm() {
                         type='text'
                         required
                         autoComplete='family-name'
+                        aria-invalid={Boolean(state.fieldErrors?.lastName)}
                         className='rounded-md border border-black/10 px-3 py-2 text-sm dark:border-white/20'
                     />
+                    {state.fieldErrors?.lastName ? (
+                        <p className='text-sm text-red-600'>{state.fieldErrors.lastName[0]}</p>
+                    ) : null}
                 </div>
             </div>
             <div className='flex flex-col gap-1'>
@@ -45,8 +53,12 @@ export function SignUpForm() {
                     type='email'
                     required
                     autoComplete='email'
+                    aria-invalid={Boolean(state.fieldErrors?.email)}
                     className='rounded-md border border-black/10 px-3 py-2 text-sm dark:border-white/20'
                 />
+                {state.fieldErrors?.email ? (
+                    <p className='text-sm text-red-600'>{state.fieldErrors.email[0]}</p>
+                ) : null}
             </div>
             <div className='flex flex-col gap-1'>
                 <label htmlFor='password' className='text-sm font-medium'>
@@ -59,8 +71,12 @@ export function SignUpForm() {
                     required
                     minLength={6}
                     autoComplete='new-password'
+                    aria-invalid={Boolean(state.fieldErrors?.password)}
                     className='rounded-md border border-black/10 px-3 py-2 text-sm dark:border-white/20'
                 />
+                {state.fieldErrors?.password ? (
+                    <p className='text-sm text-red-600'>{state.fieldErrors.password[0]}</p>
+                ) : null}
             </div>
             {state.error ? <p className='text-sm text-red-600'>{state.error}</p> : null}
             <button

@@ -1,18 +1,14 @@
 'use server';
 
-import { getCurrentUser } from '@/features/auth/server';
+import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
 import { addExerciseFromCatalog } from '../../composition';
+import { ExerciseErrorMessages } from '../lib/messages';
 import { revalidateExerciseListNow } from '../lib/revalidation';
 import {
     type AddExerciseFromCatalogFieldErrors,
     validateAddExerciseFromCatalogForm
 } from '../lib/validation';
-
-const AddExerciseFromCatalogActionMessages = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    SourceNotFound: 'Nie znaleziono ćwiczenia w katalogu.'
-} as const;
 
 export type AddExerciseFromCatalogActionState = {
     error?: string;
@@ -22,11 +18,7 @@ export type AddExerciseFromCatalogActionState = {
 export async function addExerciseFromCatalogAction(
     formData: FormData
 ): Promise<AddExerciseFromCatalogActionState> {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        return { error: AddExerciseFromCatalogActionMessages.SessionExpired };
-    }
+    const user = await getAuthenticatedUserOrRedirect();
 
     const validation = validateAddExerciseFromCatalogForm(formData);
 
@@ -40,7 +32,7 @@ export async function addExerciseFromCatalogAction(
     });
 
     if (!result.ok) {
-        return { error: AddExerciseFromCatalogActionMessages.SourceNotFound };
+        return { error: ExerciseErrorMessages[result.error] };
     }
 
     revalidateExerciseListNow();

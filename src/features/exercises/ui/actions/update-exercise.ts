@@ -1,16 +1,11 @@
 'use server';
 
-import { getCurrentUser } from '@/features/auth/server';
+import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
 import { updateExercise } from '../../composition';
+import { ExerciseActionMessages, ExerciseErrorMessages } from '../lib/messages';
 import { revalidateExerciseListNow, revalidateExerciseNow } from '../lib/revalidation';
 import { type UpdateExerciseFieldErrors, validateUpdateExerciseForm } from '../lib/validation';
-
-const UpdateExerciseActionMessages = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    NotFound: 'Nie znaleziono ćwiczenia.',
-    Saved: 'Ćwiczenie zostało zapisane.'
-} as const;
 
 export type UpdateExerciseActionState = {
     error?: string;
@@ -19,11 +14,7 @@ export type UpdateExerciseActionState = {
 };
 
 export async function updateExerciseAction(formData: FormData): Promise<UpdateExerciseActionState> {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        return { error: UpdateExerciseActionMessages.SessionExpired };
-    }
+    const user = await getAuthenticatedUserOrRedirect();
 
     const validation = validateUpdateExerciseForm(formData);
 
@@ -35,10 +26,10 @@ export async function updateExerciseAction(formData: FormData): Promise<UpdateEx
     const result = await updateExercise({ coachId: user.id, exerciseId, data });
 
     if (!result.ok) {
-        return { error: UpdateExerciseActionMessages.NotFound };
+        return { error: ExerciseErrorMessages[result.error] };
     }
 
     revalidateExerciseListNow();
     revalidateExerciseNow({ exerciseId });
-    return { success: UpdateExerciseActionMessages.Saved };
+    return { success: ExerciseActionMessages.Saved };
 }

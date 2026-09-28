@@ -4,6 +4,8 @@ import { z } from 'zod';
 
 import { ClientStatus } from '../../domain/client';
 
+const clientIdSchema = z.uuid('Nieprawidłowy identyfikator podopiecznego.');
+
 const clientSchema = z.object({
     firstName: z.string().trim().min(1, 'Podaj imię.').max(100, 'Imię jest zbyt długie.'),
     lastName: z.string().trim().min(1, 'Podaj nazwisko.').max(100, 'Nazwisko jest zbyt długie.'),
@@ -17,13 +19,11 @@ const clientSchema = z.object({
 });
 
 const updateClientSchema = clientSchema.extend({
-    clientId: z.uuid('Nieprawidłowy identyfikator podopiecznego.'),
+    clientId: clientIdSchema,
     status: z.enum([ClientStatus.Active, ClientStatus.Paused, ClientStatus.Ended], {
         error: 'Wybierz status współpracy.'
     })
 });
-
-const clientIdSchema = z.uuid();
 
 export type CreateClientFieldErrors = {
     firstName?: string[];

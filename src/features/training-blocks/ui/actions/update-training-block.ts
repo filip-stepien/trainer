@@ -1,19 +1,14 @@
 'use server';
 
-import { getCurrentUser } from '@/features/auth/server';
+import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
 import { updateTrainingBlock } from '../../composition';
+import { TrainingBlockActionMessages, TrainingBlockNotFoundMessages } from '../lib/messages';
 import { revalidateClientTrainingNow, revalidateTrainingBlockNow } from '../lib/revalidation';
 import {
     type UpdateTrainingBlockFieldErrors,
     validateUpdateTrainingBlockForm
 } from '../lib/validation';
-
-const UpdateTrainingBlockActionMessages = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    NotFound: 'Nie znaleziono roboczej wersji bloku.',
-    Saved: 'Blok treningowy został zapisany.'
-} as const;
 
 export type UpdateTrainingBlockActionState = {
     error?: string;
@@ -24,11 +19,7 @@ export type UpdateTrainingBlockActionState = {
 export async function updateTrainingBlockAction(
     formData: FormData
 ): Promise<UpdateTrainingBlockActionState> {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        return { error: UpdateTrainingBlockActionMessages.SessionExpired };
-    }
+    const user = await getAuthenticatedUserOrRedirect();
 
     const validation = validateUpdateTrainingBlockForm(formData);
 
@@ -40,10 +31,10 @@ export async function updateTrainingBlockAction(
     const result = await updateTrainingBlock({ coachId: user.id, trainingBlockId, data });
 
     if (!result.ok) {
-        return { error: UpdateTrainingBlockActionMessages.NotFound };
+        return { error: TrainingBlockNotFoundMessages.Draft };
     }
 
     revalidateClientTrainingNow({ clientId: result.value.clientId });
     revalidateTrainingBlockNow({ trainingBlockId });
-    return { success: UpdateTrainingBlockActionMessages.Saved };
+    return { success: TrainingBlockActionMessages.TrainingBlockSaved };
 }

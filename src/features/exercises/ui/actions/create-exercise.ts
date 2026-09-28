@@ -1,16 +1,12 @@
 'use server';
 
-import { getCurrentUser } from '@/features/auth/server';
+import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
 import { createExercise } from '../../composition';
+import { ExerciseActionMessages } from '../lib/messages';
 import { redirectToExercise } from '../lib/navigation';
 import { revalidateExerciseListNow } from '../lib/revalidation';
 import { type ExerciseFieldErrors, validateCreateExerciseForm } from '../lib/validation';
-
-const CreateExerciseActionMessages = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    SaveFailed: 'Nie udało się dodać ćwiczenia.'
-} as const;
 
 export type CreateExerciseActionState = {
     error?: string;
@@ -18,11 +14,7 @@ export type CreateExerciseActionState = {
 };
 
 export async function createExerciseAction(formData: FormData): Promise<CreateExerciseActionState> {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        return { error: CreateExerciseActionMessages.SessionExpired };
-    }
+    const user = await getAuthenticatedUserOrRedirect();
 
     const validation = validateCreateExerciseForm(formData);
 
@@ -33,7 +25,7 @@ export async function createExerciseAction(formData: FormData): Promise<CreateEx
     const result = await createExercise({ coachId: user.id, data: validation.data });
 
     if (!result.ok) {
-        return { error: CreateExerciseActionMessages.SaveFailed };
+        return { error: ExerciseActionMessages.CreateFailed };
     }
 
     revalidateExerciseListNow();

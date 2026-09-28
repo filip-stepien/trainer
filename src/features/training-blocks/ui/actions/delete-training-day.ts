@@ -1,18 +1,14 @@
 'use server';
 
-import { getCurrentUser } from '@/features/auth/server';
+import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
 import { deleteTrainingDay } from '../../composition';
+import { TrainingBlockNotFoundMessages } from '../lib/messages';
 import { revalidateTrainingBlockNow } from '../lib/revalidation';
 import {
     type DeleteTrainingDayFieldErrors,
     validateDeleteTrainingDayForm
 } from '../lib/validation';
-
-const DeleteTrainingDayActionMessages = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    NotFound: 'Nie znaleziono dnia w roboczej wersji bloku.'
-} as const;
 
 export type DeleteTrainingDayActionState = {
     error?: string;
@@ -22,11 +18,7 @@ export type DeleteTrainingDayActionState = {
 export async function deleteTrainingDayAction(
     formData: FormData
 ): Promise<DeleteTrainingDayActionState> {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        return { error: DeleteTrainingDayActionMessages.SessionExpired };
-    }
+    const user = await getAuthenticatedUserOrRedirect();
 
     const validation = validateDeleteTrainingDayForm(formData);
 
@@ -37,7 +29,7 @@ export async function deleteTrainingDayAction(
     const result = await deleteTrainingDay({ coachId: user.id, ...validation.data });
 
     if (!result.ok) {
-        return { error: DeleteTrainingDayActionMessages.NotFound };
+        return { error: TrainingBlockNotFoundMessages.TrainingDay };
     }
 
     revalidateTrainingBlockNow({ trainingBlockId: validation.data.trainingBlockId });

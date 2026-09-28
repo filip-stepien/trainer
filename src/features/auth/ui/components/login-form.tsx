@@ -17,8 +17,12 @@ export function LoginForm() {
                     type='email'
                     required
                     autoComplete='email'
+                    aria-invalid={Boolean(state.fieldErrors?.email)}
                     className='rounded-md border border-black/10 px-3 py-2 text-sm dark:border-white/20'
                 />
+                {state.fieldErrors?.email ? (
+                    <p className='text-sm text-red-600'>{state.fieldErrors.email[0]}</p>
+                ) : null}
             </div>
             <div className='flex flex-col gap-1'>
                 <label htmlFor='password' className='text-sm font-medium'>
@@ -30,8 +34,12 @@ export function LoginForm() {
                     type='password'
                     required
                     autoComplete='current-password'
+                    aria-invalid={Boolean(state.fieldErrors?.password)}
                     className='rounded-md border border-black/10 px-3 py-2 text-sm dark:border-white/20'
                 />
+                {state.fieldErrors?.password ? (
+                    <p className='text-sm text-red-600'>{state.fieldErrors.password[0]}</p>
+                ) : null}
             </div>
             {state.error ? <p className='text-sm text-red-600'>{state.error}</p> : null}
             <button

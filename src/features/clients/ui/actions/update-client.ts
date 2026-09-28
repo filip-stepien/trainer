@@ -1,18 +1,12 @@
 'use server';
 
-import { getCurrentUser } from '@/features/auth/server';
+import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
 import { ClientErrorCode } from '../../domain/errors';
 import { updateClient } from '../../composition';
+import { ClientActionMessages, ClientErrorMessages } from '../lib/messages';
 import { revalidateClientListNow, revalidateClientNow } from '../lib/revalidation';
 import { type UpdateClientFieldErrors, validateUpdateClientForm } from '../lib/validation';
-
-const UpdateClientActionMessages = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    EmailAlreadyInUse: 'Podopieczny z tym adresem e-mail już istnieje.',
-    NotFound: 'Nie znaleziono podopiecznego.',
-    Saved: 'Dane podopiecznego zostały zapisane.'
-} as const;
 
 export type UpdateClientActionState = {
     error?: string;
@@ -21,11 +15,7 @@ export type UpdateClientActionState = {
 };
 
 export async function updateClientAction(formData: FormData): Promise<UpdateClientActionState> {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        return { error: UpdateClientActionMessages.SessionExpired };
-    }
+    const user = await getAuthenticatedUserOrRedirect();
 
     const validation = validateUpdateClientForm(formData);
 
@@ -38,14 +28,12 @@ export async function updateClientAction(formData: FormData): Promise<UpdateClie
 
     if (!result.ok) {
         if (result.error === ClientErrorCode.EmailAlreadyInUse) {
-            return { fieldErrors: { email: [UpdateClientActionMessages.EmailAlreadyInUse] } };
+            return { fieldErrors: { email: [ClientErrorMessages[result.error]] } };
         }
-        if (result.error === ClientErrorCode.NotFound) {
-            return { error: UpdateClientActionMessages.NotFound };
-        }
+        return { error: ClientErrorMessages[result.error] };
     }
 
     revalidateClientListNow();
     revalidateClientNow({ clientId });
-    return { success: UpdateClientActionMessages.Saved };
+    return { success: ClientActionMessages.Saved };
 }
