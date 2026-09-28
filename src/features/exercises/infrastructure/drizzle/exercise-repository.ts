@@ -168,7 +168,13 @@ async function findById(database: DrizzleDatabase, { exerciseId, filter }: FindE
     const rows = await database
         .select(exerciseSelection)
         .from(exercisesTable)
-        .where(and(eq(exercisesTable.id, exerciseId), getCoachFilter(filter.coachId)))
+        .where(
+            and(
+                eq(exercisesTable.id, exerciseId),
+                getCoachFilter(filter.coachId),
+                filter.status ? getStatusFilter(filter.status) : undefined
+            )
+        )
         .limit(1);
 
     return rows[0] ? toExercise(rows[0]) : null;

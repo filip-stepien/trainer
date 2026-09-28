@@ -73,9 +73,9 @@ kopię ze źródłem, a `isCustom` odróżnia ćwiczenie utworzone ręcznie. Inf
 
 Definicja w bibliotece jest niezależna od użycia ćwiczenia w planie. Serie, powtórzenia,
 tempo, RIR, przerwy i komentarz trenera należą do konkretnego użycia ćwiczenia w planie,
-a nie do biblioteki. Opublikowana wersja planu przechowuje snapshot nazwy, instrukcji i
-linku oraz identyfikator ćwiczenia źródłowego. Dzięki temu edycja biblioteki nie zmienia
-historycznych planów.
+a nie do biblioteki. Już podczas dodawania do dnia plan przechowuje snapshot nazwy,
+instrukcji i linku oraz identyfikator ćwiczenia źródłowego. Dzięki temu edycja biblioteki
+nie zmienia ułożonych ani historycznych planów.
 
 Ćwiczenia są archiwizowane zamiast trwale usuwane, aby zachować ich powiązania z planami.
 Kategorie, partie mięśniowe, sprzęt, warianty i własne pliki multimedialne pozostają poza
@@ -87,28 +87,31 @@ Podopieczny może mieć wiele bloków w historii, ale tylko jeden aktywny blok w
 momencie. Blok zawiera:
 
 - nazwę i opis,
+- datę utworzenia i datę rozpoczęcia,
 - opcjonalną liczbę tygodni,
 - status: szkic, aktywny lub zakończony,
 - uporządkowaną listę dni treningowych,
 - historię opublikowanych wersji.
 
-Blok nie ma obowiązkowych dat kalendarzowych. Liczba tygodni pełni rolę zalecenia, a nie
-sztywnego harmonogramu.
+Blok nie ma sztywnej daty zakończenia ani kalendarza dni treningowych. Data rozpoczęcia
+określa początek bloku, a liczba tygodni pełni rolę zalecenia.
 
 ### Dzień treningowy
 
 Dzień treningowy zawiera:
 
 1. nazwę, opis lub cel treningu,
-2. rozgrzewkę,
-3. uporządkowaną listę ćwiczeń lub grup ćwiczeń,
-4. opcjonalne zakończenie, cardio lub cooldown.
+2. uporządkowaną listę ćwiczeń lub grup ćwiczeń podzieloną na rozgrzewkę i część główną.
+
+Rozgrzewka korzysta z tego samego modelu ćwiczeń, serii i zaleceń co część główna.
+Schłodzenie nie jest osobnym elementem planu.
 
 Dla ćwiczenia w planie można określić:
 
 - serie, w tym osobno serie rozgrzewkowe i robocze,
-- liczbę lub zakres powtórzeń,
-- sugerowany ciężar lub sposób progresji,
+- sposób wykonania: na liczbę lub zakres powtórzeń albo na czas,
+- czas pracy dla ćwiczeń wykonywanych na czas,
+- opcjonalne obciążenie lub sposób progresji,
 - tempo,
 - docelowy RIR,
 - czas przerwy,

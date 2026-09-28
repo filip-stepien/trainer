@@ -1,6 +1,6 @@
 import { createPage, getPagePagination } from '@/shared';
 
-import { ExerciseStatus } from '../../domain/exercise';
+import { ExerciseStatus, type Exercise } from '../../domain/exercise';
 import type { ExerciseRepository } from '../ports/exercise-repository';
 
 export type ListCatalogExercisesParams = {
@@ -9,6 +9,24 @@ export type ListCatalogExercisesParams = {
     pageSize: number;
     search: string;
 };
+
+export type CatalogExercise = {
+    exercise: Exercise;
+    libraryExercise: Exercise | null;
+};
+
+function toCatalogExercise({
+    exercise,
+    libraryExercisesBySourceId
+}: {
+    exercise: Exercise;
+    libraryExercisesBySourceId: Map<string | null, Exercise>;
+}): CatalogExercise {
+    return {
+        exercise,
+        libraryExercise: libraryExercisesBySourceId.get(exercise.id) ?? null
+    };
+}
 
 export function listCatalogExercisesFactory({
     exerciseRepository
@@ -32,15 +50,14 @@ export function listCatalogExercisesFactory({
               })
             : [];
 
-        const libraryExerciseBySourceId = new Map(
+        const libraryExercisesBySourceId = new Map(
             libraryExercises.map(exercise => [exercise.sourceExerciseId, exercise])
         );
 
         return {
-            exercises: exercises.map(exercise => ({
-                exercise,
-                libraryExercise: libraryExerciseBySourceId.get(exercise.id) ?? null
-            })),
+            exercises: exercises.map(exercise =>
+                toCatalogExercise({ exercise, libraryExercisesBySourceId })
+            ),
             hasPreviousPage: result.hasPreviousPage,
             hasNextPage: result.hasNextPage
         };

@@ -4,8 +4,10 @@ import { createNeonDrizzleDatabase } from '@/shared/server';
 
 import { addExerciseFromCatalogFactory } from './application/use-cases/add-exercise-from-catalog';
 import { createExerciseFactory } from './application/use-cases/create-exercise';
+import { getActiveExerciseFactory } from './application/use-cases/get-active-exercise';
 import { getExerciseFactory } from './application/use-cases/get-exercise';
 import { listCatalogExercisesFactory } from './application/use-cases/list-catalog-exercises';
+import { listActiveExercisesFactory } from './application/use-cases/list-active-exercises';
 import { listLibraryExercisesFactory } from './application/use-cases/list-library-exercises';
 import { setExerciseStatusFactory } from './application/use-cases/set-exercise-status';
 import { updateExerciseFactory } from './application/use-cases/update-exercise';
@@ -18,7 +20,9 @@ const exerciseRepository = createDrizzleExerciseRepository({
 
 export const createExercise = createExerciseFactory({ exerciseRepository });
 export const addExerciseFromCatalog = addExerciseFromCatalogFactory({ exerciseRepository });
+export const getActiveExercise = getActiveExerciseFactory({ exerciseRepository });
 export const getExercise = getExerciseFactory({ exerciseRepository });
+export const listActiveExercises = listActiveExercisesFactory({ exerciseRepository });
 export const listCatalogExercises = listCatalogExercisesFactory({ exerciseRepository });
 export const listLibraryExercises = listLibraryExercisesFactory({ exerciseRepository });
 export const setExerciseStatus = setExerciseStatusFactory({ exerciseRepository });

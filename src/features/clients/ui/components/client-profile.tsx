@@ -1,10 +1,18 @@
 import Link from 'next/link';
 import { ArrowLeftIcon } from 'lucide-react';
 
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared';
+import {
+    Button,
+    Card,
+    CardAction,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+    formatDateForDisplay
+} from '@/shared';
 
-import { formatDateForDisplay } from '../lib/date';
-import { getClientListPath } from '../lib/routes';
+import { getClientListPath, getClientTrainingPath } from '../lib/routes';
 import type { ClientDetails } from '../queries/get-client-details-or-redirect';
 import { ClientStatusBadge } from './client-status-badge';
 
@@ -27,6 +35,15 @@ export function ClientProfile({ client }: { client: ClientDetails }) {
                         {client.firstName} {client.lastName}
                     </CardTitle>
                     <CardDescription>Podstawowe informacje o współpracy.</CardDescription>
+                    <CardAction>
+                        <Button
+                            variant='outline'
+                            render={<Link href={getClientTrainingPath({ clientId: client.id })} />}
+                            nativeButton={false}
+                        >
+                            Plany treningowe
+                        </Button>
+                    </CardAction>
                 </CardHeader>
                 <CardContent>
                     <dl className='grid gap-5 sm:grid-cols-2'>

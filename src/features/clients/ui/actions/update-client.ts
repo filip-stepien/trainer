@@ -7,23 +7,24 @@ import { updateClient } from '../../composition';
 import { revalidateClientListNow, revalidateClientNow } from '../lib/revalidation';
 import { type UpdateClientFieldErrors, validateUpdateClientForm } from '../lib/validation';
 
+const UpdateClientActionMessages = {
+    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
+    EmailAlreadyInUse: 'Podopieczny z tym adresem e-mail już istnieje.',
+    NotFound: 'Nie znaleziono podopiecznego.',
+    Saved: 'Dane podopiecznego zostały zapisane.'
+} as const;
+
 export type UpdateClientActionState = {
     error?: string;
     success?: string;
     fieldErrors?: UpdateClientFieldErrors;
 };
 
-const UpdateClientActionError = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    EmailAlreadyInUse: 'Podopieczny z tym adresem e-mail już istnieje.',
-    NotFound: 'Nie znaleziono podopiecznego.'
-} as const;
-
 export async function updateClientAction(formData: FormData): Promise<UpdateClientActionState> {
     const user = await getCurrentUser();
 
     if (!user) {
-        return { error: UpdateClientActionError.SessionExpired };
+        return { error: UpdateClientActionMessages.SessionExpired };
     }
 
     const validation = validateUpdateClientForm(formData);
@@ -37,14 +38,14 @@ export async function updateClientAction(formData: FormData): Promise<UpdateClie
 
     if (!result.ok) {
         if (result.error === ClientErrorCode.EmailAlreadyInUse) {
-            return { fieldErrors: { email: [UpdateClientActionError.EmailAlreadyInUse] } };
+            return { fieldErrors: { email: [UpdateClientActionMessages.EmailAlreadyInUse] } };
         }
         if (result.error === ClientErrorCode.NotFound) {
-            return { error: UpdateClientActionError.NotFound };
+            return { error: UpdateClientActionMessages.NotFound };
         }
     }
 
     revalidateClientListNow();
     revalidateClientNow({ clientId });
-    return { success: 'Dane podopiecznego zostały zapisane.' };
+    return { success: UpdateClientActionMessages.Saved };
 }

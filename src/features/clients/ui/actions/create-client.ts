@@ -8,22 +8,22 @@ import { redirectToClient } from '../lib/navigation';
 import { revalidateClientListNow } from '../lib/revalidation';
 import { type CreateClientFieldErrors, validateCreateClientForm } from '../lib/validation';
 
-export type CreateClientActionState = {
-    error?: string;
-    fieldErrors?: CreateClientFieldErrors;
-};
-
-const CreateClientActionError = {
+const CreateClientActionMessages = {
     SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
     EmailAlreadyInUse: 'Podopieczny z tym adresem e-mail już istnieje.',
     Unknown: 'Nie udało się dodać podopiecznego.'
 } as const;
 
+export type CreateClientActionState = {
+    error?: string;
+    fieldErrors?: CreateClientFieldErrors;
+};
+
 export async function createClientAction(formData: FormData): Promise<CreateClientActionState> {
     const user = await getCurrentUser();
 
     if (!user) {
-        return { error: CreateClientActionError.SessionExpired };
+        return { error: CreateClientActionMessages.SessionExpired };
     }
 
     const validation = validateCreateClientForm(formData);
@@ -36,9 +36,9 @@ export async function createClientAction(formData: FormData): Promise<CreateClie
 
     if (!result.ok) {
         if (result.error === ClientErrorCode.EmailAlreadyInUse) {
-            return { fieldErrors: { email: [CreateClientActionError.EmailAlreadyInUse] } };
+            return { fieldErrors: { email: [CreateClientActionMessages.EmailAlreadyInUse] } };
         }
-        return { error: CreateClientActionError.Unknown };
+        return { error: CreateClientActionMessages.Unknown };
     }
 
     revalidateClientListNow();

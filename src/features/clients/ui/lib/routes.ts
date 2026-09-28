@@ -11,3 +11,7 @@ export function getNewClientPath() {
 export function getClientPath({ clientId }: { clientId: string }) {
     return `${clientListPath}/${clientId}`;
 }
+
+export function getClientTrainingPath({ clientId }: { clientId: string }) {
+    return `${getClientPath({ clientId })}/training`;
+}

@@ -5,15 +5,15 @@ import { signUp } from '../../composition';
 import { redirectToHome } from '../lib/navigation';
 import { validateSignUpForm } from '../lib/validation';
 
-export type SignUpActionState = {
-    error?: string;
-};
-
-const SignUpActionError: Partial<Record<AuthErrorCode, string>> = {
+const SignUpActionMessages: Partial<Record<AuthErrorCode, string>> = {
     [AuthErrorCode.EmailAlreadyInUse]: 'Konto z tym adresem e-mail już istnieje.',
     [AuthErrorCode.WeakPassword]: 'Hasło jest zbyt słabe. Wybierz silniejsze.',
     [AuthErrorCode.RateLimited]: 'Zbyt wiele prób. Spróbuj ponownie za chwilę.',
     [AuthErrorCode.Unknown]: 'Coś poszło nie tak. Spróbuj ponownie.'
+};
+
+export type SignUpActionState = {
+    error?: string;
 };
 
 export async function signUpAction(formData: FormData): Promise<SignUpActionState> {
@@ -29,7 +29,7 @@ export async function signUpAction(formData: FormData): Promise<SignUpActionStat
 
     if (!result.ok) {
         return {
-            error: SignUpActionError[result.error] ?? SignUpActionError[AuthErrorCode.Unknown]
+            error: SignUpActionMessages[result.error] ?? SignUpActionMessages[AuthErrorCode.Unknown]
         };
     }
 

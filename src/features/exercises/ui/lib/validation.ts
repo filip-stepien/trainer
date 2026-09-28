@@ -10,32 +10,6 @@ import {
     type ExerciseListView as ExerciseListViewValue
 } from './routes';
 
-export type ExerciseFieldErrors = {
-    name?: string[];
-    instructions?: string[];
-    videoUrl?: string[];
-};
-
-export type UpdateExerciseFieldErrors = ExerciseFieldErrors & {
-    exerciseId?: string[];
-};
-
-export type SetExerciseStatusFieldErrors = {
-    exerciseId?: string[];
-    status?: string[];
-};
-
-export type AddExerciseFromCatalogFieldErrors = {
-    sourceExerciseId?: string[];
-};
-
-export type ExerciseListSearchParams = {
-    page?: string | string[];
-    search?: string | string[];
-    status?: string | string[];
-    view?: string | string[];
-};
-
 const exerciseSchema = z.object({
     name: z.string().trim().min(1, 'Podaj nazwę ćwiczenia.').max(150, 'Nazwa jest zbyt długa.'),
     instructions: z
@@ -79,6 +53,32 @@ const exerciseListSearchParamsSchema = z.object({
         .catch(ExerciseListView.Library)
 });
 
+export type ExerciseFieldErrors = {
+    name?: string[];
+    instructions?: string[];
+    videoUrl?: string[];
+};
+
+export type UpdateExerciseFieldErrors = ExerciseFieldErrors & {
+    exerciseId?: string[];
+};
+
+export type SetExerciseStatusFieldErrors = {
+    exerciseId?: string[];
+    status?: string[];
+};
+
+export type AddExerciseFromCatalogFieldErrors = {
+    sourceExerciseId?: string[];
+};
+
+export type ExerciseListSearchParams = {
+    page?: string | string[];
+    search?: string | string[];
+    status?: string | string[];
+    view?: string | string[];
+};
+
 function getFirstValue(value: string | string[] | undefined) {
     return Array.isArray(value) ? value[0] : value;
 }
@@ -99,7 +99,7 @@ export function validateCreateExerciseForm(data: FormData) {
     if (!result.success) {
         return {
             ok: false as const,
-            fieldErrors: result.error.flatten().fieldErrors satisfies ExerciseFieldErrors
+            fieldErrors: z.flattenError(result.error).fieldErrors satisfies ExerciseFieldErrors
         };
     }
 
@@ -112,7 +112,8 @@ export function validateUpdateExerciseForm(data: FormData) {
     if (!result.success) {
         return {
             ok: false as const,
-            fieldErrors: result.error.flatten().fieldErrors satisfies UpdateExerciseFieldErrors
+            fieldErrors: z.flattenError(result.error)
+                .fieldErrors satisfies UpdateExerciseFieldErrors
         };
     }
 
@@ -125,7 +126,8 @@ export function validateSetExerciseStatusForm(data: FormData) {
     if (!result.success) {
         return {
             ok: false as const,
-            fieldErrors: result.error.flatten().fieldErrors satisfies SetExerciseStatusFieldErrors
+            fieldErrors: z.flattenError(result.error)
+                .fieldErrors satisfies SetExerciseStatusFieldErrors
         };
     }
 
@@ -138,7 +140,7 @@ export function validateAddExerciseFromCatalogForm(data: FormData) {
     if (!result.success) {
         return {
             ok: false as const,
-            fieldErrors: result.error.flatten()
+            fieldErrors: z.flattenError(result.error)
                 .fieldErrors satisfies AddExerciseFromCatalogFieldErrors
         };
     }

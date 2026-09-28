@@ -1,7 +1,8 @@
 import { Suspense } from 'react';
 
 import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
-import { CreateClientForm, formatDateForInput } from '@/features/clients';
+import { CreateClientForm } from '@/features/clients';
+import { toDateString } from '@/shared';
 
 import { DashboardPageLoading } from '../../_components/dashboard-page-loading';
 
@@ -18,7 +19,7 @@ export default function NewClientPage() {
 async function NewClientForm() {
     await getAuthenticatedUserOrRedirect();
 
-    const startedAt = formatDateForInput({ date: new Date() });
+    const startedAt = toDateString({ date: new Date() });
 
     return <CreateClientForm startedAt={startedAt} />;
 }

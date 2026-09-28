@@ -20,10 +20,10 @@ import {
     TableCell,
     TableHead,
     TableHeader,
-    TableRow
+    TableRow,
+    formatDateForDisplay
 } from '@/shared';
 
-import { formatDateForDisplay } from '../lib/date';
 import { getClientPath, getNewClientPath } from '../lib/routes';
 import type { ClientListItem } from '../queries/get-client-list-or-redirect';
 import { ClientStatusBadge } from './client-status-badge';

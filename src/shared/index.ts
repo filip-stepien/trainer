@@ -48,3 +48,4 @@ export {
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/components/tabs';
 export { ToggleGroup, ToggleGroupItem } from './ui/components/toggle-group';
 export { Textarea } from './ui/components/textarea';
+export { formatDateForDisplay, toDateString } from './ui/lib/date';

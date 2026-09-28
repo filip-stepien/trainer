@@ -6,22 +6,23 @@ import { updateExercise } from '../../composition';
 import { revalidateExerciseListNow, revalidateExerciseNow } from '../lib/revalidation';
 import { type UpdateExerciseFieldErrors, validateUpdateExerciseForm } from '../lib/validation';
 
+const UpdateExerciseActionMessages = {
+    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
+    NotFound: 'Nie znaleziono ćwiczenia.',
+    Saved: 'Ćwiczenie zostało zapisane.'
+} as const;
+
 export type UpdateExerciseActionState = {
     error?: string;
     success?: string;
     fieldErrors?: UpdateExerciseFieldErrors;
 };
 
-const UpdateExerciseActionError = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    NotFound: 'Nie znaleziono ćwiczenia.'
-} as const;
-
 export async function updateExerciseAction(formData: FormData): Promise<UpdateExerciseActionState> {
     const user = await getCurrentUser();
 
     if (!user) {
-        return { error: UpdateExerciseActionError.SessionExpired };
+        return { error: UpdateExerciseActionMessages.SessionExpired };
     }
 
     const validation = validateUpdateExerciseForm(formData);
@@ -34,10 +35,10 @@ export async function updateExerciseAction(formData: FormData): Promise<UpdateEx
     const result = await updateExercise({ coachId: user.id, exerciseId, data });
 
     if (!result.ok) {
-        return { error: UpdateExerciseActionError.NotFound };
+        return { error: UpdateExerciseActionMessages.NotFound };
     }
 
     revalidateExerciseListNow();
     revalidateExerciseNow({ exerciseId });
-    return { success: 'Ćwiczenie zostało zapisane.' };
+    return { success: UpdateExerciseActionMessages.Saved };
 }

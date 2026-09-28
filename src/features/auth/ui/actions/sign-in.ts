@@ -5,14 +5,14 @@ import { signIn } from '../../composition';
 import { redirectToDashboard } from '../lib/navigation';
 import { validateSignInForm } from '../lib/validation';
 
-export type SignInActionState = {
-    error?: string;
-};
-
-const SignInActionError: Partial<Record<AuthErrorCode, string>> = {
+const SignInActionMessages: Partial<Record<AuthErrorCode, string>> = {
     [AuthErrorCode.InvalidCredentials]: 'Nieprawidłowy adres e-mail lub hasło.',
     [AuthErrorCode.RateLimited]: 'Zbyt wiele prób. Spróbuj ponownie za chwilę.',
     [AuthErrorCode.Unknown]: 'Coś poszło nie tak. Spróbuj ponownie.'
+};
+
+export type SignInActionState = {
+    error?: string;
 };
 
 export async function signInAction(formData: FormData): Promise<SignInActionState> {
@@ -26,7 +26,7 @@ export async function signInAction(formData: FormData): Promise<SignInActionStat
 
     if (!result.ok) {
         return {
-            error: SignInActionError[result.error] ?? SignInActionError[AuthErrorCode.Unknown]
+            error: SignInActionMessages[result.error] ?? SignInActionMessages[AuthErrorCode.Unknown]
         };
     }
 

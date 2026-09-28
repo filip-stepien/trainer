@@ -9,15 +9,15 @@ import {
     validateAddExerciseFromCatalogForm
 } from '../lib/validation';
 
+const AddExerciseFromCatalogActionMessages = {
+    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
+    SourceNotFound: 'Nie znaleziono ćwiczenia w katalogu.'
+} as const;
+
 export type AddExerciseFromCatalogActionState = {
     error?: string;
     fieldErrors?: AddExerciseFromCatalogFieldErrors;
 };
-
-const AddExerciseFromCatalogActionError = {
-    SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
-    SourceNotFound: 'Nie znaleziono ćwiczenia w katalogu.'
-} as const;
 
 export async function addExerciseFromCatalogAction(
     formData: FormData
@@ -25,7 +25,7 @@ export async function addExerciseFromCatalogAction(
     const user = await getCurrentUser();
 
     if (!user) {
-        return { error: AddExerciseFromCatalogActionError.SessionExpired };
+        return { error: AddExerciseFromCatalogActionMessages.SessionExpired };
     }
 
     const validation = validateAddExerciseFromCatalogForm(formData);
@@ -40,7 +40,7 @@ export async function addExerciseFromCatalogAction(
     });
 
     if (!result.ok) {
-        return { error: AddExerciseFromCatalogActionError.SourceNotFound };
+        return { error: AddExerciseFromCatalogActionMessages.SourceNotFound };
     }
 
     revalidateExerciseListNow();

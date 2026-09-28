@@ -4,19 +4,6 @@ import { z } from 'zod';
 
 import { ClientStatus } from '../../domain/client';
 
-export type CreateClientFieldErrors = {
-    firstName?: string[];
-    lastName?: string[];
-    email?: string[];
-    phone?: string[];
-    startedAt?: string[];
-};
-
-export type UpdateClientFieldErrors = CreateClientFieldErrors & {
-    clientId?: string[];
-    status?: string[];
-};
-
 const clientSchema = z.object({
     firstName: z.string().trim().min(1, 'Podaj imię.').max(100, 'Imię jest zbyt długie.'),
     lastName: z.string().trim().min(1, 'Podaj nazwisko.').max(100, 'Nazwisko jest zbyt długie.'),
@@ -38,6 +25,19 @@ const updateClientSchema = clientSchema.extend({
 
 const clientIdSchema = z.uuid();
 
+export type CreateClientFieldErrors = {
+    firstName?: string[];
+    lastName?: string[];
+    email?: string[];
+    phone?: string[];
+    startedAt?: string[];
+};
+
+export type UpdateClientFieldErrors = CreateClientFieldErrors & {
+    clientId?: string[];
+    status?: string[];
+};
+
 export function validateClientId({ clientId }: { clientId: string }) {
     const result = clientIdSchema.safeParse(clientId);
 
@@ -54,7 +54,7 @@ export function validateCreateClientForm(data: FormData) {
     if (!result.success) {
         return {
             ok: false as const,
-            fieldErrors: result.error.flatten().fieldErrors satisfies CreateClientFieldErrors
+            fieldErrors: z.flattenError(result.error).fieldErrors satisfies CreateClientFieldErrors
         };
     }
 
@@ -67,7 +67,7 @@ export function validateUpdateClientForm(data: FormData) {
     if (!result.success) {
         return {
             ok: false as const,
-            fieldErrors: result.error.flatten().fieldErrors satisfies UpdateClientFieldErrors
+            fieldErrors: z.flattenError(result.error).fieldErrors satisfies UpdateClientFieldErrors
         };
     }
 

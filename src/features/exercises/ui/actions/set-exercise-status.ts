@@ -6,15 +6,15 @@ import { setExerciseStatus } from '../../composition';
 import { revalidateExerciseListNow, revalidateExerciseNow } from '../lib/revalidation';
 import { validateSetExerciseStatusForm } from '../lib/validation';
 
-export type SetExerciseStatusActionState = {
-    error?: string;
-};
-
-const SetExerciseStatusActionError = {
+const SetExerciseStatusActionMessages = {
     SessionExpired: 'Sesja wygasła. Zaloguj się ponownie.',
     InvalidData: 'Nieprawidłowe dane ćwiczenia.',
     NotFound: 'Nie znaleziono ćwiczenia.'
 } as const;
+
+export type SetExerciseStatusActionState = {
+    error?: string;
+};
 
 export async function setExerciseStatusAction(
     formData: FormData
@@ -22,20 +22,20 @@ export async function setExerciseStatusAction(
     const user = await getCurrentUser();
 
     if (!user) {
-        return { error: SetExerciseStatusActionError.SessionExpired };
+        return { error: SetExerciseStatusActionMessages.SessionExpired };
     }
 
     const validation = validateSetExerciseStatusForm(formData);
 
     if (!validation.ok) {
-        return { error: SetExerciseStatusActionError.InvalidData };
+        return { error: SetExerciseStatusActionMessages.InvalidData };
     }
 
     const { exerciseId, status } = validation.data;
     const result = await setExerciseStatus({ coachId: user.id, exerciseId, status });
 
     if (!result.ok) {
-        return { error: SetExerciseStatusActionError.NotFound };
+        return { error: SetExerciseStatusActionMessages.NotFound };
     }
 
     revalidateExerciseListNow();

@@ -2,10 +2,13 @@ import 'server-only';
 
 import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
+import type { CatalogExercise } from '../../application/use-cases/list-catalog-exercises';
 import { listCatalogExercises, listLibraryExercises } from '../../composition';
 import type { Exercise } from '../../domain/exercise';
 import { ExerciseListStatus, ExerciseListView } from '../lib/routes';
 import { type ExerciseListSearchParams, validateExerciseListSearchParams } from '../lib/validation';
+
+const exercisePageSize = 50;
 
 export type ExerciseLibraryListItem = Pick<
     Exercise,
@@ -16,7 +19,18 @@ export type ExerciseCatalogListItem = Pick<Exercise, 'id' | 'name'> & {
     libraryExercise: Pick<Exercise, 'id' | 'status'> | null;
 };
 
-const exercisePageSize = 50;
+function toExerciseCatalogListItem({
+    exercise,
+    libraryExercise
+}: CatalogExercise): ExerciseCatalogListItem {
+    return {
+        id: exercise.id,
+        name: exercise.name,
+        libraryExercise: libraryExercise
+            ? { id: libraryExercise.id, status: libraryExercise.status }
+            : null
+    };
+}
 
 function toExerciseLibraryListItem(exercise: Exercise): ExerciseLibraryListItem {
     return {
@@ -48,13 +62,7 @@ export async function getExerciseListOrRedirect({
 
         return {
             view: ExerciseListView.Catalog,
-            exercises: result.exercises.map(({ exercise, libraryExercise }) => ({
-                id: exercise.id,
-                name: exercise.name,
-                libraryExercise: libraryExercise
-                    ? { id: libraryExercise.id, status: libraryExercise.status }
-                    : null
-            })),
+            exercises: result.exercises.map(toExerciseCatalogListItem),
             filters,
             pagination: {
                 page: filters.page,

@@ -53,9 +53,11 @@ domain/                  generic, business-agnostic kernel types used by every l
                           Does NOT belong under a feature's domain/.
 infrastructure/          runtime/platform concerns: env var reading, provider SDK
                           client factories (the Neon Auth singleton, the Postgres client factory)
-ui/                      generic, business-agnostic UI kit — shadcn's own CLI-managed
-                          output, not hand-written application code:
-  components/            shadcn/ui primitives (button.tsx, card.tsx, sidebar.tsx, ...).
+ui/                      generic, business-agnostic UI kit: shadcn's CLI-managed output
+                          plus the few hand-written helpers that are just as
+                          business-agnostic. No feature knowledge lives here:
+  components/            shadcn/ui primitives (button.tsx, card.tsx, sidebar.tsx, ...),
+                          CLI-managed rather than hand-written.
                           components.json's `ui` alias points here (@/shared/ui/components).
     blocks/<block-name>/  a shadcn block installed wholesale, kept under its registry
                           name (e.g. components/blocks/dashboard/ for
@@ -65,7 +67,8 @@ ui/                      generic, business-agnostic UI kit — shadcn's own CLI-
                           belongs in that feature's own ui/components/.
   hooks/                 supporting hooks for the primitives (use-mobile.ts).
                           components.json's `hooks` alias points here.
-  lib/                   supporting utilities (cn() in lib/utils.ts).
+  lib/                   supporting utilities: cn() in lib/utils.ts, plus hand-written
+                          business-agnostic helpers shared by features (date.ts).
                           components.json's `lib`/`utils` aliases point here.
 index.ts                 universal public barrel, safe to import from server and client
 server.ts                optional server-only public barrel
@@ -81,6 +84,7 @@ client.ts                optional client-only public barrel for browser-only API
 - Crossing OUT of a feature (e.g. from `app/`) always uses `@/features/<feature>`, `@/features/<feature>/server`, or `@/features/<feature>/client` according to the runtime boundary. Never reach into a feature's `domain/`, `application/`, `infrastructure/`, or `ui/` from outside.
 - Crossing OUT of `shared/` works the same way: use `@/shared`, `@/shared/server`, or `@/shared/client`, never a deep path like `@/shared/infrastructure/env`.
 - Within a feature or within `shared/`, sibling internal files import each other directly (e.g. `ui/actions/sign-in.ts` imports `AuthErrorCode` straight from `../../domain/errors`, not through the feature's own barrel). The barrel is the feature's public surface, not a mandatory hop for every internal import.
+- A Drizzle schema may import another feature's Drizzle schema only to declare a database foreign key. This infrastructure-only dependency is not a feature API; repositories, application code, and UI still follow the public-barrel rules above.
 - A module containing `'use client'` is not automatically appropriate for `client.ts`. React Client Components can be imported and rendered by Server Components, so reusable UI components belong in the universal `index.ts`. Use `client.ts` for APIs such as hooks that directly depend on browser or client runtime behavior.
 - A `'use server'` action may be re-exported from `index.ts` because Next.js exposes it to Client Components as a callable server reference. Its underlying use-case, adapter, and provider remain internal behind `composition.ts`.
 - The composition root (wiring an adapter into use-cases) lives in the feature's internal, server-only `composition.ts`. Server Actions and queries import composed implementations from there, while `server.ts` is only the public server barrel. Whether an adapter is built once as a module-level singleton or fresh per request depends on the provider (Neon Auth's `auth` object is a singleton that reads request context lazily per call; a provider without that trick needs a fresh client per request instead).
@@ -91,7 +95,7 @@ client.ts                optional client-only public barrel for browser-only API
 - The caller decides how to present a `Result`'s error — mapping to a message, logging, etc. — never bake presentation into the domain/application layer.
 - Error codes are a dictionary, not a bare union: `export const AuthErrorCode = { InvalidCredentials: 'invalid_credentials', ... } as const` plus `export type AuthErrorCode = (typeof AuthErrorCode)[keyof typeof AuthErrorCode]`. Call sites reference `AuthErrorCode.InvalidCredentials`, never the raw string literal.
 - One shared error-code union per bounded concept is fine even if a given operation can't produce every member of it — don't fragment into a separate union per operation unless there's a concrete reason to.
-- Match a provider's own errors by its stable error **code** (e.g. Better Auth's `error.code`, like `INVALID_EMAIL_OR_PASSWORD`), never by parsing `error.message` — message text is locale/wording-dependent and not a public contract.
+- Match a provider's own errors by its stable error **code**, never by parsing `error.message` — message text is locale/wording-dependent and not a public contract. Verify which code actually reaches the adapter rather than the one the provider's HTTP API returns: `@neondatabase/auth` re-maps Better Auth's upstream codes (`INVALID_EMAIL_OR_PASSWORD`) onto its own snake_case set (`invalid_credentials`, `user_not_found`, `user_already_exists`, `email_exists`, `weak_password`, `over_request_rate_limit`), and those normalized codes are what `error.code` carries. Mapping the upstream spelling silently falls through to the unknown-error branch.
 
 ## Code style
 
@@ -103,13 +107,15 @@ client.ts                optional client-only public barrel for browser-only API
 - Repository method names describe only the persistence operation: use `save`, `findAll`/`findPage`, `findById`, `updateById`, and `updateStatusById`. Pass lookup predicates, ownership scope, optional search conditions, and pagination through typed `filter` and `pagination` objects instead of encoding a query expression in the method name. The application layer decides which filters to use; repository names do not introduce authorization or other business concepts.
 - No comments in the code. If something needs explaining, make the code itself clearer instead.
 - Server Actions: one per file, file named after the action (`sign-in.ts`), the exported action function takes only `(formData: FormData)` — no `prevState` parameter on the action itself.
-- A Server Action that returns errors defines its own local error-message dictionary and references only that dictionary from the action body; do not inline error message strings in control-flow branches.
+- A Server Action keeps every user-facing message it can return — failures and confirmations alike — in one local `<Action>ActionMessages` dictionary, and its body references only that dictionary; never write a message string inline in a control-flow branch. Keys name what happened (`SessionExpired`, `NotFound`, `Saved`, `Added`), so the dictionary doubles as a list of the action's outcomes. Where messages map from a domain error code, the dictionary is keyed by that code instead (`Partial<Record<AuthErrorCode, string>>`).
 - Client hooks (`ui/hooks/`) are what adapt a plain action into whatever contract a React API demands (e.g. wrapping it into `useActionState`'s `(prevState, formData)` shape). That adaptation never leaks into the action itself.
 - Hooks return a plain object (`{ state, formAction, isPending }`), never a tuple.
 - Components never import a Server Action directly — always through the corresponding hook.
 - Server Actions pass `FormData` to feature-local validators in `ui/lib/validation.ts`.
   Validators own Zod schemas and map Zod errors to plain field-error objects; Server Actions
-  do not import Zod or depend on its result/error API.
+  do not import Zod or depend on its result/error API. Zod 4 deprecated the `ZodError` methods:
+  read issues with the standalone `z.flattenError(error)` or `z.treeifyError(error)`, never
+  `error.flatten()` or `error.format()`.
 - Pages follow the same validation boundary and do not import Zod. Feature route construction
   lives in universal `ui/lib/routes.ts`, while calls to Next.js `redirect()` live in server-only
   `ui/lib/navigation.ts`. Pages, components, and actions use these helpers instead of literal paths.
@@ -118,6 +124,19 @@ client.ts                optional client-only public barrel for browser-only API
   Server Actions, queries import composed use-case implementations from the feature's internal
   `composition.ts`. Queries return explicit, minimal DTOs instead of forwarding domain entities
   directly across the Server-to-Client boundary.
+- Projecting a row or an entity onto another shape lives in a named `toX` function annotated with
+  the shape it returns (`toClient`, `toExerciseLibraryListItem`, `toTrainingBlockDetails`), declared
+  above its call site — never an inline object literal inside `.map()` or a `return`. Repositories,
+  queries, and adapters follow the same rule, so a projection is always readable on its own and its
+  target type is checked in one place. A mapper needing more than one source takes them as a single
+  object parameter, keeping the call site at `items.map(toListItem)`.
+- Within a file, declarations are ordered: module constants, then types, then functions, with the
+  file's exported entry point last. A function sits above every function that uses it, so a file
+  reads from its building blocks down to its public surface. A dependency outranks this order and
+  the three recurring cases are: a `const` dictionary and the type derived from it stay adjacent
+  (`ExerciseStatus`); a helper that a constant needs is declared above that constant (`optionalNumber`
+  above the Zod schemas built with it); and a type derived from a function's return type follows that
+  function (`ExerciseListResult`).
 - File names: kebab-case for anything multi-word (`sign-in.ts`, `auth-provider.ts`, `login-form.tsx`). Single-word files are unaffected. Next.js–mandated filenames (`page.tsx`, `layout.tsx`, `middleware.ts`) keep their required names as-is.
 - Avoid baking generic pattern words into names where possible (avoid "-repository", "-use-case" suffixes) — but a name that's genuinely the concept (e.g. `AuthProvider`) is fine.
 

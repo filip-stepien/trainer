@@ -48,7 +48,7 @@ export type FindAllExercisesParams = {
 
 export type FindExerciseByIdParams = {
     exerciseId: string;
-    filter: { coachId: string | null };
+    filter: { coachId: string | null; status?: ExerciseStatus };
 };
 
 export type UpdateExerciseByIdParams = {
