@@ -7,11 +7,14 @@ import type { AuthUser } from '../domain/user';
 import type { AuthProvider, SignInInput, SignUpInput } from '../application/ports/auth-provider';
 
 const neonAuthErrorCodes: Partial<Record<string, AuthErrorCode>> = {
-    INVALID_EMAIL_OR_PASSWORD: AuthErrorCode.InvalidCredentials,
-    USER_ALREADY_EXISTS: AuthErrorCode.EmailAlreadyInUse,
-    USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: AuthErrorCode.EmailAlreadyInUse,
-    PASSWORD_TOO_SHORT: AuthErrorCode.WeakPassword,
-    PASSWORD_TOO_LONG: AuthErrorCode.WeakPassword
+    invalid_credentials: AuthErrorCode.InvalidCredentials,
+    user_not_found: AuthErrorCode.InvalidCredentials,
+    identity_not_found: AuthErrorCode.InvalidCredentials,
+    user_already_exists: AuthErrorCode.EmailAlreadyInUse,
+    email_exists: AuthErrorCode.EmailAlreadyInUse,
+    weak_password: AuthErrorCode.WeakPassword,
+    over_request_rate_limit: AuthErrorCode.RateLimited,
+    over_email_send_rate_limit: AuthErrorCode.RateLimited
 };
 
 function toAuthError(error: { code?: string; status?: number }): AuthErrorCode {
