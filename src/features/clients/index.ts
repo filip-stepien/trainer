@@ -1,7 +1,13 @@
 export type { Client, ClientStatus as ClientStatusValue } from './domain/client';
 export { ClientStatus, getClientFullName } from './domain/client';
+export { ClientAvatar } from './ui/components/client-avatar';
 export { ClientList } from './ui/components/client-list';
-export { ClientProfile } from './ui/components/client-profile';
+export { ClientOverview } from './ui/components/client-overview';
 export { CreateClientForm } from './ui/components/create-client-form';
-export { EditClientForm } from './ui/components/edit-client-form';
-export { getClientListPath, getClientPath, getClientTrainingPath } from './ui/lib/routes';
+export { EditClientDialog } from './ui/components/edit-client-dialog';
+export {
+    getClientListPath,
+    getClientPath,
+    getNewClientPath,
+    isClientSectionPath
+} from './ui/lib/routes';

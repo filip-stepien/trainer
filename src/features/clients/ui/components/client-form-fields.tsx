@@ -16,7 +16,7 @@ type ClientFormValues = {
     startedAt: string;
 };
 
-export function ClientFormFields({
+export function ClientPersonalFields({
     defaultValues,
     errors
 }: {
@@ -25,34 +25,61 @@ export function ClientFormFields({
 }) {
     return (
         <FieldGroup>
-            <Field data-invalid={Boolean(errors?.firstName)}>
-                <FieldLabel htmlFor='firstName'>Imię</FieldLabel>
+            <div className='grid gap-4 sm:grid-cols-2'>
+                <Field data-invalid={Boolean(errors?.firstName)}>
+                    <FieldLabel htmlFor='firstName'>Imię</FieldLabel>
+                    <Input
+                        id='firstName'
+                        name='firstName'
+                        type='text'
+                        required
+                        maxLength={100}
+                        autoComplete='given-name'
+                        defaultValue={defaultValues.firstName}
+                        aria-invalid={Boolean(errors?.firstName)}
+                    />
+                    <FieldError>{errors?.firstName?.[0]}</FieldError>
+                </Field>
+                <Field data-invalid={Boolean(errors?.lastName)}>
+                    <FieldLabel htmlFor='lastName'>Nazwisko</FieldLabel>
+                    <Input
+                        id='lastName'
+                        name='lastName'
+                        type='text'
+                        required
+                        maxLength={100}
+                        autoComplete='family-name'
+                        defaultValue={defaultValues.lastName}
+                        aria-invalid={Boolean(errors?.lastName)}
+                    />
+                    <FieldError>{errors?.lastName?.[0]}</FieldError>
+                </Field>
+            </div>
+            <Field data-invalid={Boolean(errors?.startedAt)}>
+                <FieldLabel htmlFor='startedAt'>Początek współpracy</FieldLabel>
                 <Input
-                    id='firstName'
-                    name='firstName'
-                    type='text'
+                    id='startedAt'
+                    name='startedAt'
+                    type='date'
                     required
-                    maxLength={100}
-                    autoComplete='given-name'
-                    defaultValue={defaultValues.firstName}
-                    aria-invalid={Boolean(errors?.firstName)}
+                    defaultValue={defaultValues.startedAt}
+                    aria-invalid={Boolean(errors?.startedAt)}
                 />
-                <FieldError>{errors?.firstName?.[0]}</FieldError>
+                <FieldError>{errors?.startedAt?.[0]}</FieldError>
             </Field>
-            <Field data-invalid={Boolean(errors?.lastName)}>
-                <FieldLabel htmlFor='lastName'>Nazwisko</FieldLabel>
-                <Input
-                    id='lastName'
-                    name='lastName'
-                    type='text'
-                    required
-                    maxLength={100}
-                    autoComplete='family-name'
-                    defaultValue={defaultValues.lastName}
-                    aria-invalid={Boolean(errors?.lastName)}
-                />
-                <FieldError>{errors?.lastName?.[0]}</FieldError>
-            </Field>
+        </FieldGroup>
+    );
+}
+
+export function ClientContactFields({
+    defaultValues,
+    errors
+}: {
+    defaultValues: ClientFormValues;
+    errors?: ClientFormFieldErrors;
+}) {
+    return (
+        <FieldGroup>
             <Field data-invalid={Boolean(errors?.email)}>
                 <FieldLabel htmlFor='email'>E-mail</FieldLabel>
                 <Input
@@ -62,6 +89,7 @@ export function ClientFormFields({
                     required
                     maxLength={320}
                     autoComplete='email'
+                    placeholder='jan.kowalski@example.com'
                     defaultValue={defaultValues.email}
                     aria-invalid={Boolean(errors?.email)}
                 />
@@ -75,22 +103,11 @@ export function ClientFormFields({
                     type='tel'
                     maxLength={50}
                     autoComplete='tel'
+                    placeholder='Opcjonalnie'
                     defaultValue={defaultValues.phone ?? ''}
                     aria-invalid={Boolean(errors?.phone)}
                 />
                 <FieldError>{errors?.phone?.[0]}</FieldError>
-            </Field>
-            <Field data-invalid={Boolean(errors?.startedAt)}>
-                <FieldLabel htmlFor='startedAt'>Początek współpracy</FieldLabel>
-                <Input
-                    id='startedAt'
-                    name='startedAt'
-                    type='date'
-                    required
-                    defaultValue={defaultValues.startedAt}
-                    aria-invalid={Boolean(errors?.startedAt)}
-                />
-                <FieldError>{errors?.startedAt?.[0]}</FieldError>
             </Field>
         </FieldGroup>
     );

@@ -2,16 +2,17 @@
 
 import { useState } from 'react';
 
-import { ClientStatus, type ClientStatus as ClientStatusValue } from '../../domain/client';
+import type { ClientStatus } from '../../domain/client';
+import { isClientStatus } from '../lib/status';
 
-export function useClientStatus({ initialStatus }: { initialStatus: ClientStatusValue }) {
+export function useClientStatus({ initialStatus }: { initialStatus: ClientStatus }) {
     const [status, setStatus] = useState(initialStatus);
 
     function handleStatusChange(values: unknown[]) {
         const nextStatus = values[0];
 
-        if (Object.values(ClientStatus).includes(nextStatus as ClientStatusValue)) {
-            setStatus(nextStatus as ClientStatusValue);
+        if (isClientStatus(nextStatus)) {
+            setStatus(nextStatus);
         }
     }
 
