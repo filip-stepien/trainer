@@ -6,6 +6,7 @@ export type ClientFormFieldErrors = {
     email?: string[];
     phone?: string[];
     startedAt?: string[];
+    endsAt?: string[];
 };
 
 type ClientFormValues = {
@@ -14,6 +15,7 @@ type ClientFormValues = {
     email?: string;
     phone?: string | null;
     startedAt: string;
+    endsAt?: string | null;
 };
 
 export function ClientPersonalFields({
@@ -55,18 +57,31 @@ export function ClientPersonalFields({
                     <FieldError>{errors?.lastName?.[0]}</FieldError>
                 </Field>
             </div>
-            <Field data-invalid={Boolean(errors?.startedAt)}>
-                <FieldLabel htmlFor='startedAt'>Początek współpracy</FieldLabel>
-                <Input
-                    id='startedAt'
-                    name='startedAt'
-                    type='date'
-                    required
-                    defaultValue={defaultValues.startedAt}
-                    aria-invalid={Boolean(errors?.startedAt)}
-                />
-                <FieldError>{errors?.startedAt?.[0]}</FieldError>
-            </Field>
+            <div className='grid gap-4 sm:grid-cols-2'>
+                <Field data-invalid={Boolean(errors?.startedAt)}>
+                    <FieldLabel htmlFor='startedAt'>Początek współpracy</FieldLabel>
+                    <Input
+                        id='startedAt'
+                        name='startedAt'
+                        type='date'
+                        required
+                        defaultValue={defaultValues.startedAt}
+                        aria-invalid={Boolean(errors?.startedAt)}
+                    />
+                    <FieldError>{errors?.startedAt?.[0]}</FieldError>
+                </Field>
+                <Field data-invalid={Boolean(errors?.endsAt)}>
+                    <FieldLabel htmlFor='endsAt'>Koniec współpracy (opcjonalnie)</FieldLabel>
+                    <Input
+                        id='endsAt'
+                        name='endsAt'
+                        type='date'
+                        defaultValue={defaultValues.endsAt ?? ''}
+                        aria-invalid={Boolean(errors?.endsAt)}
+                    />
+                    <FieldError>{errors?.endsAt?.[0]}</FieldError>
+                </Field>
+            </div>
         </FieldGroup>
     );
 }

@@ -1,0 +1,2 @@
+ALTER TABLE "coach_clients" ADD COLUMN "ends_at" date;--> statement-breakpoint
+ALTER TABLE "coach_clients" ADD CONSTRAINT "coach_clients_ends_at_check" CHECK ("coach_clients"."ends_at" is null or "coach_clients"."ends_at" >= "coach_clients"."started_at");

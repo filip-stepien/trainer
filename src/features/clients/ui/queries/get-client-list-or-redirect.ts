@@ -7,7 +7,7 @@ import type { Client } from '../../domain/client';
 
 export type ClientListItem = Pick<
     Client,
-    'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'status' | 'startedAt'
+    'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'status' | 'startedAt' | 'endsAt'
 >;
 
 function toClientListItem(client: Client): ClientListItem {
@@ -18,7 +18,8 @@ function toClientListItem(client: Client): ClientListItem {
         email: client.email,
         phone: client.phone,
         status: client.status,
-        startedAt: client.startedAt
+        startedAt: client.startedAt,
+        endsAt: client.endsAt
     };
 }
 

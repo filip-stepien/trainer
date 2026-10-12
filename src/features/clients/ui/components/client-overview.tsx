@@ -58,6 +58,7 @@ function CollaborationTile({ client }: { client: ClientDetails }) {
                 <span className='flex items-center gap-2'>
                     <CalendarIcon className='text-muted-foreground size-4 shrink-0' />
                     Od {formatDateForDisplay({ date: client.startedAt })}
+                    {client.endsAt ? ` do ${formatDateForDisplay({ date: client.endsAt })}` : null}
                 </span>
             </CardContent>
         </Card>

@@ -21,6 +21,7 @@ const clientSelection = {
     phone: coachClientsTable.phone,
     status: coachClientsTable.status,
     startedAt: coachClientsTable.startedAt,
+    endsAt: coachClientsTable.endsAt,
     createdAt: coachClientsTable.createdAt,
     updatedAt: coachClientsTable.updatedAt
 };
@@ -33,6 +34,7 @@ type ClientRow = {
     phone: string | null;
     status: ClientStatus;
     startedAt: string;
+    endsAt: string | null;
     createdAt: Date;
     updatedAt: Date;
 };

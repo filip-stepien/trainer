@@ -14,6 +14,7 @@ export type Client = {
     phone: string | null;
     status: ClientStatus;
     startedAt: string;
+    endsAt: string | null;
     createdAt: string;
     updatedAt: string;
 };

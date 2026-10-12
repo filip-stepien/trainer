@@ -9,7 +9,7 @@ import { validateClientId } from '../lib/validation';
 
 export type ClientDetails = Pick<
     Client,
-    'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'status' | 'startedAt'
+    'id' | 'firstName' | 'lastName' | 'email' | 'phone' | 'status' | 'startedAt' | 'endsAt'
 >;
 
 function toClientDetails(client: Client): ClientDetails {
@@ -20,7 +20,8 @@ function toClientDetails(client: Client): ClientDetails {
         email: client.email,
         phone: client.phone,
         status: client.status,
-        startedAt: client.startedAt
+        startedAt: client.startedAt,
+        endsAt: client.endsAt
     };
 }
 

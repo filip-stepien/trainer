@@ -58,6 +58,9 @@ function ClientTile({ client }: { client: ClientListItem }) {
                     <span className='flex items-center gap-2'>
                         <CalendarIcon className='size-4 shrink-0' />
                         Współpraca od {formatDateForDisplay({ date: client.startedAt })}
+                        {client.endsAt
+                            ? ` do ${formatDateForDisplay({ date: client.endsAt })}`
+                            : null}
                     </span>
                     <ClientStatusBadge status={client.status} />
                 </span>

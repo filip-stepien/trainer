@@ -4,6 +4,16 @@ import { z } from 'zod';
 
 import { ClientStatus } from '../../domain/client';
 
+function validateCollaborationPeriod(data: z.infer<typeof clientSchema>, context: z.RefinementCtx) {
+    if (data.endsAt !== null && data.endsAt < data.startedAt) {
+        context.addIssue({
+            code: 'custom',
+            path: ['endsAt'],
+            message: 'Koniec współpracy nie może być wcześniejszy niż jej początek.'
+        });
+    }
+}
+
 const clientIdSchema = z.uuid('Nieprawidłowy identyfikator podopiecznego.');
 
 const clientSchema = z.object({
@@ -15,15 +25,23 @@ const clientSchema = z.object({
         .trim()
         .max(50, 'Numer telefonu jest zbyt długi.')
         .transform(value => value || null),
-    startedAt: z.iso.date('Podaj prawidłową datę rozpoczęcia współpracy.')
+    startedAt: z.iso.date('Podaj prawidłową datę rozpoczęcia współpracy.'),
+    endsAt: z.preprocess(
+        value => (value === '' ? null : value),
+        z.iso.date('Podaj prawidłową datę zakończenia współpracy.').nullable()
+    )
 });
 
-const updateClientSchema = clientSchema.extend({
-    clientId: clientIdSchema,
-    status: z.enum([ClientStatus.Active, ClientStatus.Paused, ClientStatus.Ended], {
-        error: 'Wybierz status współpracy.'
+const createClientSchema = clientSchema.superRefine(validateCollaborationPeriod);
+
+const updateClientSchema = clientSchema
+    .extend({
+        clientId: clientIdSchema,
+        status: z.enum([ClientStatus.Active, ClientStatus.Paused, ClientStatus.Ended], {
+            error: 'Wybierz status współpracy.'
+        })
     })
-});
+    .superRefine(validateCollaborationPeriod);
 
 export type CreateClientFieldErrors = {
     firstName?: string[];
@@ -31,6 +49,7 @@ export type CreateClientFieldErrors = {
     email?: string[];
     phone?: string[];
     startedAt?: string[];
+    endsAt?: string[];
 };
 
 export type UpdateClientFieldErrors = CreateClientFieldErrors & {
@@ -49,7 +68,7 @@ export function validateClientId({ clientId }: { clientId: string }) {
 }
 
 export function validateCreateClientForm(data: FormData) {
-    const result = clientSchema.safeParse(Object.fromEntries(data));
+    const result = createClientSchema.safeParse(Object.fromEntries(data));
 
     if (!result.success) {
         return {

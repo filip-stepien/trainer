@@ -24,8 +24,8 @@ const createClientSteps = [
     {
         id: 'personal',
         title: 'Dane podopiecznego',
-        description: 'Kogo prowadzisz i od kiedy trwa współpraca.',
-        fields: ['firstName', 'lastName', 'startedAt']
+        description: 'Kogo prowadzisz oraz od kiedy i do kiedy trwa współpraca.',
+        fields: ['firstName', 'lastName', 'startedAt', 'endsAt']
     },
     {
         id: 'contact',

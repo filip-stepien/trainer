@@ -1,0 +1,954 @@
+{
+    "id": "154c09b8-126f-44ea-a244-25cb005cac08",
+    "prevId": "144c4302-0058-4b4d-9d6b-73b0da059211",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "public.clients": {
+            "name": "clients",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "auth_user_id": {
+                    "name": "auth_user_id",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "clients_auth_user_id_unique": {
+                    "name": "clients_auth_user_id_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["auth_user_id"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.coach_clients": {
+            "name": "coach_clients",
+            "schema": "",
+            "columns": {
+                "coach_id": {
+                    "name": "coach_id",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "client_id": {
+                    "name": "client_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "first_name": {
+                    "name": "first_name",
+                    "type": "varchar(100)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "last_name": {
+                    "name": "last_name",
+                    "type": "varchar(100)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "email": {
+                    "name": "email",
+                    "type": "varchar(320)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "phone": {
+                    "name": "phone",
+                    "type": "varchar(50)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "status": {
+                    "name": "status",
+                    "type": "client_status",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'active'"
+                },
+                "started_at": {
+                    "name": "started_at",
+                    "type": "date",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "ends_at": {
+                    "name": "ends_at",
+                    "type": "date",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "coach_clients_coach_email_unique": {
+                    "name": "coach_clients_coach_email_unique",
+                    "columns": [
+                        {
+                            "expression": "coach_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "email",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "coach_clients_coach_name_index": {
+                    "name": "coach_clients_coach_name_index",
+                    "columns": [
+                        {
+                            "expression": "coach_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "last_name",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "first_name",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "coach_clients_client_id_clients_id_fk": {
+                    "name": "coach_clients_client_id_clients_id_fk",
+                    "tableFrom": "coach_clients",
+                    "tableTo": "clients",
+                    "columnsFrom": ["client_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {
+                "coach_clients_coach_id_client_id_pk": {
+                    "name": "coach_clients_coach_id_client_id_pk",
+                    "columns": ["coach_id", "client_id"]
+                }
+            },
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {
+                "coach_clients_ends_at_check": {
+                    "name": "coach_clients_ends_at_check",
+                    "value": "\"coach_clients\".\"ends_at\" is null or \"coach_clients\".\"ends_at\" >= \"coach_clients\".\"started_at\""
+                }
+            },
+            "isRLSEnabled": false
+        },
+        "public.exercises": {
+            "name": "exercises",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "coach_id": {
+                    "name": "coach_id",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "source_exercise_id": {
+                    "name": "source_exercise_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "is_custom": {
+                    "name": "is_custom",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(150)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "instructions": {
+                    "name": "instructions",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "video_url": {
+                    "name": "video_url",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "archived_at": {
+                    "name": "archived_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "exercises_coach_archived_name_index": {
+                    "name": "exercises_coach_archived_name_index",
+                    "columns": [
+                        {
+                            "expression": "coach_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "archived_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "name",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "exercises_coach_source_unique_index": {
+                    "name": "exercises_coach_source_unique_index",
+                    "columns": [
+                        {
+                            "expression": "coach_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "source_exercise_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "where": "\"exercises\".\"source_exercise_id\" is not null",
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "exercises_source_exercise_id_exercises_id_fk": {
+                    "name": "exercises_source_exercise_id_exercises_id_fk",
+                    "tableFrom": "exercises",
+                    "tableTo": "exercises",
+                    "columnsFrom": ["source_exercise_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "restrict",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {
+                "exercises_kind_check": {
+                    "name": "exercises_kind_check",
+                    "value": "(\n                \"exercises\".\"coach_id\" is null\n                and \"exercises\".\"source_exercise_id\" is null\n                and not \"exercises\".\"is_custom\"\n            ) or (\n                \"exercises\".\"coach_id\" is not null\n                and \"exercises\".\"source_exercise_id\" is not null\n                and not \"exercises\".\"is_custom\"\n            ) or (\n                \"exercises\".\"coach_id\" is not null\n                and \"exercises\".\"source_exercise_id\" is null\n                and \"exercises\".\"is_custom\"\n            )"
+                }
+            },
+            "isRLSEnabled": false
+        },
+        "public.training_block_versions": {
+            "name": "training_block_versions",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "training_block_id": {
+                    "name": "training_block_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "version_number": {
+                    "name": "version_number",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(150)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "description": {
+                    "name": "description",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "duration_weeks": {
+                    "name": "duration_weeks",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "published_at": {
+                    "name": "published_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "training_block_versions_number_unique": {
+                    "name": "training_block_versions_number_unique",
+                    "columns": [
+                        {
+                            "expression": "training_block_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "version_number",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "where": "\"training_block_versions\".\"version_number\" is not null",
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "training_block_versions_draft_unique": {
+                    "name": "training_block_versions_draft_unique",
+                    "columns": [
+                        {
+                            "expression": "training_block_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "where": "\"training_block_versions\".\"published_at\" is null",
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "training_block_versions_block_published_index": {
+                    "name": "training_block_versions_block_published_index",
+                    "columns": [
+                        {
+                            "expression": "training_block_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "published_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "training_block_versions_training_block_id_training_blocks_id_fk": {
+                    "name": "training_block_versions_training_block_id_training_blocks_id_fk",
+                    "tableFrom": "training_block_versions",
+                    "tableTo": "training_blocks",
+                    "columnsFrom": ["training_block_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {
+                "training_block_versions_publication_check": {
+                    "name": "training_block_versions_publication_check",
+                    "value": "(\"training_block_versions\".\"published_at\" is null and \"training_block_versions\".\"version_number\" is null) or (\"training_block_versions\".\"published_at\" is not null and \"training_block_versions\".\"version_number\" is not null)"
+                },
+                "training_block_versions_duration_weeks_check": {
+                    "name": "training_block_versions_duration_weeks_check",
+                    "value": "\"training_block_versions\".\"duration_weeks\" is null or (\"training_block_versions\".\"duration_weeks\" >= 1 and \"training_block_versions\".\"duration_weeks\" <= 104)"
+                }
+            },
+            "isRLSEnabled": false
+        },
+        "public.training_blocks": {
+            "name": "training_blocks",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "coach_id": {
+                    "name": "coach_id",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "client_id": {
+                    "name": "client_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "status": {
+                    "name": "status",
+                    "type": "training_block_status",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'draft'"
+                },
+                "start_date": {
+                    "name": "start_date",
+                    "type": "date",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "current_date"
+                },
+                "active_version_id": {
+                    "name": "active_version_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "training_blocks_active_coach_client_unique": {
+                    "name": "training_blocks_active_coach_client_unique",
+                    "columns": [
+                        {
+                            "expression": "coach_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "client_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "where": "\"training_blocks\".\"status\" = 'active'",
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "training_blocks_coach_client_updated_index": {
+                    "name": "training_blocks_coach_client_updated_index",
+                    "columns": [
+                        {
+                            "expression": "coach_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "client_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "updated_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "training_blocks_active_version_id_training_block_versions_id_fk": {
+                    "name": "training_blocks_active_version_id_training_block_versions_id_fk",
+                    "tableFrom": "training_blocks",
+                    "tableTo": "training_block_versions",
+                    "columnsFrom": ["active_version_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "restrict",
+                    "onUpdate": "no action"
+                },
+                "training_blocks_coach_client_foreign_key": {
+                    "name": "training_blocks_coach_client_foreign_key",
+                    "tableFrom": "training_blocks",
+                    "tableTo": "coach_clients",
+                    "columnsFrom": ["coach_id", "client_id"],
+                    "columnsTo": ["coach_id", "client_id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {
+                "training_blocks_active_version_check": {
+                    "name": "training_blocks_active_version_check",
+                    "value": "\"training_blocks\".\"status\" <> 'active' or \"training_blocks\".\"active_version_id\" is not null"
+                }
+            },
+            "isRLSEnabled": false
+        },
+        "public.training_day_exercises": {
+            "name": "training_day_exercises",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "training_day_id": {
+                    "name": "training_day_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "exercise_id": {
+                    "name": "exercise_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "section": {
+                    "name": "section",
+                    "type": "training_day_exercise_section",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "position": {
+                    "name": "position",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "is_linked_to_previous": {
+                    "name": "is_linked_to_previous",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(150)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "instructions": {
+                    "name": "instructions",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "video_url": {
+                    "name": "video_url",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "target_type": {
+                    "name": "target_type",
+                    "type": "training_day_exercise_target_type",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'repetitions'"
+                },
+                "sets": {
+                    "name": "sets",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'[]'::jsonb"
+                },
+                "tempo": {
+                    "name": "tempo",
+                    "type": "varchar(50)",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "rest_seconds": {
+                    "name": "rest_seconds",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "notes": {
+                    "name": "notes",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "training_day_exercises_day_section_position_index": {
+                    "name": "training_day_exercises_day_section_position_index",
+                    "columns": [
+                        {
+                            "expression": "training_day_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "section",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "position",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "training_day_exercises_training_day_id_training_days_id_fk": {
+                    "name": "training_day_exercises_training_day_id_training_days_id_fk",
+                    "tableFrom": "training_day_exercises",
+                    "tableTo": "training_days",
+                    "columnsFrom": ["training_day_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "training_day_exercises_exercise_id_exercises_id_fk": {
+                    "name": "training_day_exercises_exercise_id_exercises_id_fk",
+                    "tableFrom": "training_day_exercises",
+                    "tableTo": "exercises",
+                    "columnsFrom": ["exercise_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "restrict",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {
+                "training_day_exercises_position_check": {
+                    "name": "training_day_exercises_position_check",
+                    "value": "\"training_day_exercises\".\"position\" >= 0"
+                },
+                "training_day_exercises_sets_check": {
+                    "name": "training_day_exercises_sets_check",
+                    "value": "jsonb_typeof(\"training_day_exercises\".\"sets\") = 'array' and jsonb_array_length(\"training_day_exercises\".\"sets\") <= 100"
+                },
+                "training_day_exercises_rest_seconds_check": {
+                    "name": "training_day_exercises_rest_seconds_check",
+                    "value": "\"training_day_exercises\".\"rest_seconds\" is null or (\"training_day_exercises\".\"rest_seconds\" >= 0 and \"training_day_exercises\".\"rest_seconds\" <= 3600)"
+                }
+            },
+            "isRLSEnabled": false
+        },
+        "public.training_days": {
+            "name": "training_days",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "training_block_version_id": {
+                    "name": "training_block_version_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "position": {
+                    "name": "position",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(150)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "description": {
+                    "name": "description",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp with time zone",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "training_days_version_position_index": {
+                    "name": "training_days_version_position_index",
+                    "columns": [
+                        {
+                            "expression": "training_block_version_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "position",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {
+                "training_days_training_block_version_id_training_block_versions_id_fk": {
+                    "name": "training_days_training_block_version_id_training_block_versions_id_fk",
+                    "tableFrom": "training_days",
+                    "tableTo": "training_block_versions",
+                    "columnsFrom": ["training_block_version_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {
+                "training_days_position_check": {
+                    "name": "training_days_position_check",
+                    "value": "\"training_days\".\"position\" >= 0"
+                }
+            },
+            "isRLSEnabled": false
+        }
+    },
+    "enums": {
+        "public.client_status": {
+            "name": "client_status",
+            "schema": "public",
+            "values": ["active", "paused", "ended"]
+        },
+        "public.training_block_status": {
+            "name": "training_block_status",
+            "schema": "public",
+            "values": ["draft", "active", "completed"]
+        },
+        "public.training_day_exercise_section": {
+            "name": "training_day_exercise_section",
+            "schema": "public",
+            "values": ["warmup", "main"]
+        },
+        "public.training_day_exercise_target_type": {
+            "name": "training_day_exercise_target_type",
+            "schema": "public",
+            "values": ["repetitions", "duration"]
+        }
+    },
+    "schemas": {},
+    "sequences": {},
+    "roles": {},
+    "policies": {},
+    "views": {},
+    "_meta": {
+        "columns": {},
+        "schemas": {},
+        "tables": {}
+    }
+}

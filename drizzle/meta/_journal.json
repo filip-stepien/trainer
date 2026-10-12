@@ -1,34 +1,41 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1788347784199,
-      "tag": "0000_create_clients_schema",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1788547835618,
-      "tag": "0001_create_exercise_library",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1788630956464,
-      "tag": "0002_create_training_blocks",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1791803029426,
-      "tag": "0003_add_exercise_sets_and_links",
-      "breakpoints": true
-    }
-  ]
+    "version": "7",
+    "dialect": "postgresql",
+    "entries": [
+        {
+            "idx": 0,
+            "version": "7",
+            "when": 1788347784199,
+            "tag": "0000_create_clients_schema",
+            "breakpoints": true
+        },
+        {
+            "idx": 1,
+            "version": "7",
+            "when": 1788547835618,
+            "tag": "0001_create_exercise_library",
+            "breakpoints": true
+        },
+        {
+            "idx": 2,
+            "version": "7",
+            "when": 1788630956464,
+            "tag": "0002_create_training_blocks",
+            "breakpoints": true
+        },
+        {
+            "idx": 3,
+            "version": "7",
+            "when": 1791803029426,
+            "tag": "0003_add_exercise_sets_and_links",
+            "breakpoints": true
+        },
+        {
+            "idx": 4,
+            "version": "7",
+            "when": 1791836480085,
+            "tag": "0004_add_client_collaboration_end",
+            "breakpoints": true
+        }
+    ]
 }

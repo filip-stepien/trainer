@@ -1,4 +1,6 @@
+import { sql } from 'drizzle-orm';
 import {
+    check,
     date,
     index,
     pgEnum,
@@ -41,12 +43,17 @@ export const coachClientsTable = pgTable(
         phone: varchar('phone', { length: 50 }),
         status: clientStatusEnum('status').notNull().default(ClientStatus.Active),
         startedAt: date('started_at').notNull(),
+        endsAt: date('ends_at'),
         createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
         updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
     },
     table => [
         primaryKey({ columns: [table.coachId, table.clientId] }),
         uniqueIndex(coachClientEmailUniqueConstraint).on(table.coachId, table.email),
-        index('coach_clients_coach_name_index').on(table.coachId, table.lastName, table.firstName)
+        index('coach_clients_coach_name_index').on(table.coachId, table.lastName, table.firstName),
+        check(
+            'coach_clients_ends_at_check',
+            sql`${table.endsAt} is null or ${table.endsAt} >= ${table.startedAt}`
+        )
     ]
 );

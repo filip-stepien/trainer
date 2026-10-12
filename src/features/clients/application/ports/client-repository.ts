@@ -9,6 +9,7 @@ export type CreateClientData = {
     email: string;
     phone: string | null;
     startedAt: string;
+    endsAt: string | null;
 };
 
 export type UpdateClientData = CreateClientData & {
