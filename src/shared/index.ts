@@ -76,15 +76,7 @@ export {
 export { Skeleton } from './ui/components/skeleton';
 export { Toaster } from './ui/components/sonner';
 export { Spinner } from './ui/components/spinner';
-export {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow
-} from './ui/components/table';
-export { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/components/tabs';
+export { Tabs, TabsList, TabsTrigger } from './ui/components/tabs';
 export { ToggleGroup, ToggleGroupItem } from './ui/components/toggle-group';
 export { Textarea } from './ui/components/textarea';
 export { formatDateForDisplay, toDateString } from './ui/lib/date';
