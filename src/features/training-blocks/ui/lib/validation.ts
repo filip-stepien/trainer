@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { TrainingDayMoveDirection } from '../../domain/training-day';
 import {
     TrainingDayExerciseMoveDirection,
+    TrainingDayExerciseMoveScope,
     TrainingDayExerciseSection,
     TrainingDayExerciseTargetType
 } from '../../domain/training-day-exercise';
@@ -20,16 +21,42 @@ function validateTrainingDayExerciseTarget(
     data: z.infer<typeof trainingDayExercisePrescriptionSchema>,
     context: z.RefinementCtx
 ) {
-    if (
-        data.targetType === TrainingDayExerciseTargetType.Duration &&
-        data.durationSeconds === null
-    ) {
-        context.addIssue({
-            code: 'custom',
-            path: ['durationSeconds'],
-            message: 'Podaj czas pracy.'
-        });
+    if (data.targetType !== TrainingDayExerciseTargetType.Duration) {
+        return;
     }
+
+    data.sets.forEach((set, index) => {
+        if (set.durationSeconds === null) {
+            context.addIssue({
+                code: 'custom',
+                path: ['sets'],
+                message: `Seria ${index + 1}: podaj czas pracy.`
+            });
+        }
+    });
+}
+
+function readTrainingDayExerciseSets(data: FormData) {
+    const reps = data.getAll('setReps');
+    const durationSeconds = data.getAll('setDurationSeconds');
+    const loadKg = data.getAll('setLoadKg');
+    const rir = data.getAll('setRir');
+    const setCount = Math.max(reps.length, durationSeconds.length, loadKg.length, rir.length);
+
+    return Array.from({ length: setCount }, (_, index) => ({
+        reps: String(reps[index] ?? ''),
+        durationSeconds: String(durationSeconds[index] ?? ''),
+        loadKg: String(loadKg[index] ?? ''),
+        rir: String(rir[index] ?? '')
+    }));
+}
+
+function getFirstValue(value: string | string[] | undefined) {
+    return Array.isArray(value) ? value[0] : value;
+}
+
+function readTrainingDayExerciseForm(data: FormData) {
+    return { ...Object.fromEntries(data), sets: readTrainingDayExerciseSets(data) };
 }
 
 const clientIdSchema = z.uuid('Nieprawidłowy identyfikator podopiecznego.');
@@ -39,6 +66,14 @@ const trainingBlockIdSchema = z.uuid('Nieprawidłowy identyfikator bloku trening
 const trainingDayIdSchema = z.uuid('Nieprawidłowy identyfikator dnia treningowego.');
 
 const trainingDayExerciseIdSchema = z.uuid('Nieprawidłowy identyfikator ćwiczenia w planie.');
+
+const trainingBlockSearchParamsSchema = z.object({
+    day: trainingDayIdSchema.optional().catch(undefined),
+    add: z
+        .enum([TrainingDayExerciseSection.Warmup, TrainingDayExerciseSection.Main])
+        .optional()
+        .catch(undefined)
+});
 
 const trainingDayRefSchema = z.object({
     trainingBlockId: trainingBlockIdSchema,
@@ -97,18 +132,7 @@ const moveTrainingDaySchema = trainingDayRefSchema.extend({
 
 const deleteTrainingDaySchema = trainingDayRefSchema;
 
-const trainingDayExercisePrescriptionSchema = z.object({
-    sets: optionalNumber(
-        z.coerce
-            .number('Podaj liczbę serii.')
-            .int('Liczba serii musi być liczbą całkowitą.')
-            .min(1, 'Podaj co najmniej jedną serię.')
-            .max(100, 'Liczba serii nie może przekraczać 100.')
-    ),
-    targetType: z.enum([
-        TrainingDayExerciseTargetType.Repetitions,
-        TrainingDayExerciseTargetType.Duration
-    ]),
+const trainingDayExerciseSetSchema = z.object({
     reps: z
         .string()
         .trim()
@@ -121,20 +145,29 @@ const trainingDayExercisePrescriptionSchema = z.object({
             .min(1, 'Czas pracy musi wynosić co najmniej sekundę.')
             .max(86400, 'Czas pracy nie może przekraczać 24 godzin.')
     ),
-    load: z
-        .string()
-        .trim()
-        .max(50, 'Opis obciążenia jest zbyt długi.')
-        .transform(value => value || null),
-    tempo: z
-        .string()
-        .trim()
-        .max(50, 'Tempo jest zbyt długie.')
-        .transform(value => value || null),
+    loadKg: optionalNumber(
+        z.coerce
+            .number('Podaj obciążenie w kilogramach.')
+            .min(0, 'Obciążenie nie może być ujemne.')
+            .max(1000, 'Obciążenie nie może przekraczać 1000 kg.')
+    ),
     rir: z
         .string()
         .trim()
         .max(50, 'RIR jest zbyt długi.')
+        .transform(value => value || null)
+});
+
+const trainingDayExercisePrescriptionSchema = z.object({
+    targetType: z.enum([
+        TrainingDayExerciseTargetType.Repetitions,
+        TrainingDayExerciseTargetType.Duration
+    ]),
+    sets: z.array(trainingDayExerciseSetSchema).max(100, 'Ćwiczenie może mieć najwyżej 100 serii.'),
+    tempo: z
+        .string()
+        .trim()
+        .max(50, 'Tempo jest zbyt długie.')
         .transform(value => value || null),
     restSeconds: optionalNumber(
         z.coerce
@@ -163,7 +196,14 @@ const updateTrainingDayExerciseSchema = trainingDayExercisePrescriptionSchema
     .superRefine(validateTrainingDayExerciseTarget);
 
 const moveTrainingDayExerciseSchema = trainingDayExerciseRefSchema.extend({
-    direction: z.enum([TrainingDayExerciseMoveDirection.Up, TrainingDayExerciseMoveDirection.Down])
+    direction: z.enum([TrainingDayExerciseMoveDirection.Up, TrainingDayExerciseMoveDirection.Down]),
+    scope: z
+        .enum([TrainingDayExerciseMoveScope.Exercise, TrainingDayExerciseMoveScope.Group])
+        .default(TrainingDayExerciseMoveScope.Exercise)
+});
+
+const setTrainingDayExerciseLinkSchema = trainingDayExerciseRefSchema.extend({
+    isLinkedToPrevious: z.enum(['true', 'false']).transform(value => value === 'true')
 });
 
 const deleteTrainingDayExerciseSchema = trainingDayExerciseRefSchema;
@@ -210,13 +250,9 @@ export type MoveTrainingDayFieldErrors = TrainingDayRefFieldErrors & {
 export type DeleteTrainingDayFieldErrors = TrainingDayRefFieldErrors;
 
 export type TrainingDayExerciseFieldErrors = {
-    sets?: string[];
     targetType?: string[];
-    reps?: string[];
-    durationSeconds?: string[];
-    load?: string[];
+    sets?: string[];
     tempo?: string[];
-    rir?: string[];
     restSeconds?: string[];
     notes?: string[];
 };
@@ -232,6 +268,16 @@ export type UpdateTrainingDayExerciseFieldErrors = TrainingDayExerciseFieldError
 
 export type MoveTrainingDayExerciseFieldErrors = TrainingDayExerciseRefFieldErrors & {
     direction?: string[];
+    scope?: string[];
+};
+
+export type SetTrainingDayExerciseLinkFieldErrors = TrainingDayExerciseRefFieldErrors & {
+    isLinkedToPrevious?: string[];
+};
+
+export type TrainingBlockSearchParams = {
+    day?: string | string[];
+    add?: string | string[];
 };
 
 export type DeleteTrainingDayExerciseFieldErrors = TrainingDayExerciseRefFieldErrors;
@@ -341,7 +387,7 @@ export function validateDeleteTrainingDayForm(data: FormData) {
 }
 
 export function validateAddTrainingDayExerciseForm(data: FormData) {
-    const result = addTrainingDayExerciseSchema.safeParse(Object.fromEntries(data));
+    const result = addTrainingDayExerciseSchema.safeParse(readTrainingDayExerciseForm(data));
 
     if (!result.success) {
         return {
@@ -355,7 +401,7 @@ export function validateAddTrainingDayExerciseForm(data: FormData) {
 }
 
 export function validateUpdateTrainingDayExerciseForm(data: FormData) {
-    const result = updateTrainingDayExerciseSchema.safeParse(Object.fromEntries(data));
+    const result = updateTrainingDayExerciseSchema.safeParse(readTrainingDayExerciseForm(data));
 
     if (!result.success) {
         return {
@@ -394,4 +440,25 @@ export function validateDeleteTrainingDayExerciseForm(data: FormData) {
     }
 
     return { ok: true as const, data: result.data };
+}
+
+export function validateSetTrainingDayExerciseLinkForm(data: FormData) {
+    const result = setTrainingDayExerciseLinkSchema.safeParse(Object.fromEntries(data));
+
+    if (!result.success) {
+        return {
+            ok: false as const,
+            fieldErrors: z.flattenError(result.error)
+                .fieldErrors satisfies SetTrainingDayExerciseLinkFieldErrors
+        };
+    }
+
+    return { ok: true as const, data: result.data };
+}
+
+export function validateTrainingBlockSearchParams(data: TrainingBlockSearchParams) {
+    return trainingBlockSearchParamsSchema.parse({
+        day: getFirstValue(data.day),
+        add: getFirstValue(data.add)
+    });
 }

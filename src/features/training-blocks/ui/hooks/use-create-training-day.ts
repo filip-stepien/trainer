@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { type FormActionOptions, useFormAction } from '@/shared/client';
 
 import {
     createTrainingDayAction,
@@ -9,12 +9,6 @@ import {
 
 const initialState: CreateTrainingDayActionState = {};
 
-export function useCreateTrainingDay() {
-    const [state, formAction, isPending] = useActionState(
-        (_prevState: CreateTrainingDayActionState, formData: FormData) =>
-            createTrainingDayAction(formData),
-        initialState
-    );
-
-    return { state, formAction, isPending };
+export function useCreateTrainingDay(options?: FormActionOptions<CreateTrainingDayActionState>) {
+    return useFormAction(createTrainingDayAction, initialState, options);
 }

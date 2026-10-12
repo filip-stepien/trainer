@@ -1,5 +1,5 @@
 export type { Client, ClientStatus as ClientStatusValue } from './domain/client';
-export { ClientStatus } from './domain/client';
+export { ClientStatus, getClientFullName } from './domain/client';
 export { ClientList } from './ui/components/client-list';
 export { ClientProfile } from './ui/components/client-profile';
 export { CreateClientForm } from './ui/components/create-client-form';

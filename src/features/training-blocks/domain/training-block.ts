@@ -43,3 +43,24 @@ export function normalizeTrainingBlockData(data: TrainingBlockData): TrainingBlo
         startDate: data.startDate
     };
 }
+
+export function getTrainingBlockEstimatedEndDate({
+    startDate,
+    durationWeeks
+}: {
+    startDate: string;
+    durationWeeks: number | null;
+}) {
+    if (!durationWeeks || !Number.isInteger(durationWeeks) || durationWeeks < 1) {
+        return null;
+    }
+
+    const endDate = new Date(`${startDate}T00:00:00Z`);
+
+    if (Number.isNaN(endDate.getTime())) {
+        return null;
+    }
+
+    endDate.setUTCDate(endDate.getUTCDate() + durationWeeks * 7 - 1);
+    return endDate.toISOString().slice(0, 10);
+}

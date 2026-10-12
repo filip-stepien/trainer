@@ -5,7 +5,8 @@ import {
     FieldGroup,
     FieldLabel,
     Input,
-    Textarea
+    Textarea,
+    formatDateForDisplay
 } from '@/shared';
 
 export type TrainingBlockFormFieldErrors = {
@@ -22,7 +23,7 @@ type TrainingBlockFormValues = {
     startDate?: string;
 };
 
-export function TrainingBlockFormFields({
+export function TrainingBlockBasicsFields({
     defaultValues = {},
     errors
 }: {
@@ -39,7 +40,6 @@ export function TrainingBlockFormFields({
                     type='text'
                     required
                     maxLength={150}
-                    autoFocus
                     placeholder='Np. Budowanie siły — etap 1'
                     defaultValue={defaultValues.name}
                     aria-invalid={Boolean(errors?.name)}
@@ -58,19 +58,21 @@ export function TrainingBlockFormFields({
                 />
                 <FieldError>{errors?.startDate?.[0]}</FieldError>
             </Field>
-            <Field data-invalid={Boolean(errors?.description)}>
-                <FieldLabel htmlFor='description'>Opis</FieldLabel>
-                <Textarea
-                    id='description'
-                    name='description'
-                    rows={5}
-                    maxLength={5000}
-                    placeholder='Cel bloku i najważniejsze założenia'
-                    defaultValue={defaultValues.description ?? ''}
-                    aria-invalid={Boolean(errors?.description)}
-                />
-                <FieldError>{errors?.description?.[0]}</FieldError>
-            </Field>
+        </FieldGroup>
+    );
+}
+
+export function TrainingBlockPlanFields({
+    defaultValues = {},
+    errors,
+    estimatedEndDate
+}: {
+    defaultValues?: TrainingBlockFormValues;
+    errors?: TrainingBlockFormFieldErrors;
+    estimatedEndDate: string | null;
+}) {
+    return (
+        <FieldGroup>
             <Field data-invalid={Boolean(errors?.durationWeeks)}>
                 <FieldLabel htmlFor='durationWeeks'>Planowana liczba tygodni</FieldLabel>
                 <Input
@@ -80,14 +82,29 @@ export function TrainingBlockFormFields({
                     min={1}
                     max={104}
                     inputMode='numeric'
-                    placeholder='Opcjonalnie'
+                    placeholder='Opcjonalnie, np. 8'
                     defaultValue={defaultValues.durationWeeks ?? ''}
                     aria-invalid={Boolean(errors?.durationWeeks)}
                 />
-                <FieldDescription>
-                    Pomaga oszacować koniec bloku, ale nie tworzy sztywnej daty zakończenia.
-                </FieldDescription>
+                {estimatedEndDate ? (
+                    <FieldDescription>
+                        Szacowany koniec: {formatDateForDisplay({ date: estimatedEndDate })}
+                    </FieldDescription>
+                ) : null}
                 <FieldError>{errors?.durationWeeks?.[0]}</FieldError>
+            </Field>
+            <Field data-invalid={Boolean(errors?.description)}>
+                <FieldLabel htmlFor='description'>Cel i założenia</FieldLabel>
+                <Textarea
+                    id='description'
+                    name='description'
+                    rows={5}
+                    maxLength={5000}
+                    placeholder='Opcjonalnie: czemu służy ten blok i na czym się skupia'
+                    defaultValue={defaultValues.description ?? ''}
+                    aria-invalid={Boolean(errors?.description)}
+                />
+                <FieldError>{errors?.description?.[0]}</FieldError>
             </Field>
         </FieldGroup>
     );

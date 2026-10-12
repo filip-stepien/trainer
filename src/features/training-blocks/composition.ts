@@ -14,6 +14,7 @@ import { listTrainingDayExercisesFactory } from './application/use-cases/list-tr
 import { listTrainingDaysFactory } from './application/use-cases/list-training-days';
 import { moveTrainingDayFactory } from './application/use-cases/move-training-day';
 import { moveTrainingDayExerciseFactory } from './application/use-cases/move-training-day-exercise';
+import { setTrainingDayExerciseLinkFactory } from './application/use-cases/set-training-day-exercise-link';
 import { updateTrainingBlockFactory } from './application/use-cases/update-training-block';
 import { updateTrainingDayExerciseFactory } from './application/use-cases/update-training-day-exercise';
 import { updateTrainingDayFactory } from './application/use-cases/update-training-day';
@@ -49,6 +50,9 @@ export const listTrainingDayExercises = listTrainingDayExercisesFactory({
     trainingDayExerciseRepository
 });
 export const moveTrainingDayExercise = moveTrainingDayExerciseFactory({
+    trainingDayExerciseRepository
+});
+export const setTrainingDayExerciseLink = setTrainingDayExerciseLinkFactory({
     trainingDayExerciseRepository
 });
 export const updateTrainingDayExercise = updateTrainingDayExerciseFactory({

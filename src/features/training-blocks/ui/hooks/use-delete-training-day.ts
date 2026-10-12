@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useFormAction } from '@/shared/client';
 
 import {
     deleteTrainingDayAction,
@@ -10,11 +10,5 @@ import {
 const initialState: DeleteTrainingDayActionState = {};
 
 export function useDeleteTrainingDay() {
-    const [state, formAction, isPending] = useActionState(
-        (_prevState: DeleteTrainingDayActionState, formData: FormData) =>
-            deleteTrainingDayAction(formData),
-        initialState
-    );
-
-    return { state, formAction, isPending };
+    return useFormAction(deleteTrainingDayAction, initialState, { toastErrors: true });
 }

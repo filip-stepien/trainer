@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useFormAction } from '@/shared/client';
 
 import {
     createTrainingBlockAction,
@@ -10,11 +10,5 @@ import {
 const initialState: CreateTrainingBlockActionState = {};
 
 export function useCreateTrainingBlock() {
-    const [state, formAction, isPending] = useActionState(
-        (_prevState: CreateTrainingBlockActionState, formData: FormData) =>
-            createTrainingBlockAction(formData),
-        initialState
-    );
-
-    return { state, formAction, isPending };
+    return useFormAction(createTrainingBlockAction, initialState);
 }

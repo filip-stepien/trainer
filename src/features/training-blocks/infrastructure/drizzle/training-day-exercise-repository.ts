@@ -15,6 +15,7 @@ import { TrainingBlockErrorCode } from '../../domain/errors';
 import type {
     TrainingDayExercise,
     TrainingDayExerciseSection,
+    TrainingDayExerciseSet,
     TrainingDayExerciseTargetType
 } from '../../domain/training-day-exercise';
 import { trainingBlocksTable, trainingBlockVersionsTable } from './training-block-schema';
@@ -27,16 +28,13 @@ const trainingDayExerciseSelection = {
     exerciseId: trainingDayExercisesTable.exerciseId,
     section: trainingDayExercisesTable.section,
     position: trainingDayExercisesTable.position,
+    isLinkedToPrevious: trainingDayExercisesTable.isLinkedToPrevious,
     name: trainingDayExercisesTable.name,
     instructions: trainingDayExercisesTable.instructions,
     videoUrl: trainingDayExercisesTable.videoUrl,
-    sets: trainingDayExercisesTable.sets,
     targetType: trainingDayExercisesTable.targetType,
-    reps: trainingDayExercisesTable.reps,
-    durationSeconds: trainingDayExercisesTable.durationSeconds,
-    load: trainingDayExercisesTable.load,
+    sets: trainingDayExercisesTable.sets,
     tempo: trainingDayExercisesTable.tempo,
-    rir: trainingDayExercisesTable.rir,
     restSeconds: trainingDayExercisesTable.restSeconds,
     notes: trainingDayExercisesTable.notes,
     createdAt: trainingDayExercisesTable.createdAt,
@@ -116,20 +114,17 @@ async function save(database: DrizzleDatabase, { data, filter }: SaveTrainingDay
                         sql<number>`coalesce((select max(${trainingDayExercisesTable.position}) + 1 from ${trainingDayExercisesTable} where ${trainingDayExercisesTable.trainingDayId} = ${trainingDaysTable.id} and ${trainingDayExercisesTable.section} = ${data.section}), 0)`.as(
                             'position'
                         ),
+                    isLinkedToPrevious: sql<boolean>`false`.as('is_linked_to_previous'),
                     name: sql<string>`${data.name}`.as('name'),
                     instructions: sql<string | null>`${data.instructions}`.as('instructions'),
                     videoUrl: sql<string | null>`${data.videoUrl}`.as('video_url'),
-                    sets: sql<number | null>`${data.sets}`.as('sets'),
                     targetType: sql<TrainingDayExerciseTargetType>`${data.targetType}`.as(
                         'target_type'
                     ),
-                    reps: sql<string | null>`${data.reps}`.as('reps'),
-                    durationSeconds: sql<number | null>`${data.durationSeconds}`.as(
-                        'duration_seconds'
+                    sets: sql<TrainingDayExerciseSet[]>`${JSON.stringify(data.sets)}::jsonb`.as(
+                        'sets'
                     ),
-                    load: sql<string | null>`${data.load}`.as('load'),
                     tempo: sql<string | null>`${data.tempo}`.as('tempo'),
-                    rir: sql<string | null>`${data.rir}`.as('rir'),
                     restSeconds: sql<number | null>`${data.restSeconds}`.as('rest_seconds'),
                     notes: sql<string | null>`${data.notes}`.as('notes'),
                     createdAt: sql<Date>`now()`.as('created_at'),
@@ -221,10 +216,15 @@ async function updateAll(
         item =>
             sql`when ${trainingDayExercisesTable.id} = ${item.trainingDayExerciseId} then ${item.position}`
     );
+    const linkCases = data.map(
+        item =>
+            sql`when ${trainingDayExercisesTable.id} = ${item.trainingDayExerciseId} then ${item.isLinkedToPrevious}`
+    );
     const rows = await database
         .update(trainingDayExercisesTable)
         .set({
             position: sql<number>`case ${sql.join(positionCases, sql.raw(' '))} else ${trainingDayExercisesTable.position} end`,
+            isLinkedToPrevious: sql<boolean>`case ${sql.join(linkCases, sql.raw(' '))} else ${trainingDayExercisesTable.isLinkedToPrevious} end`,
             updatedAt: sql`now()`
         })
         .where(inArray(trainingDayExercisesTable.id, getMatchingIds(database, filter, ids)))

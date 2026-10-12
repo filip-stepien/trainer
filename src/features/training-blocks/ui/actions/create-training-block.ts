@@ -6,7 +6,7 @@ import { createTrainingBlock } from '../../composition';
 import { TrainingBlockErrorCode } from '../../domain/errors';
 import { TrainingBlockActionMessages, TrainingBlockNotFoundMessages } from '../lib/messages';
 import { redirectToTrainingBlock } from '../lib/navigation';
-import { revalidateClientTrainingNow } from '../lib/revalidation';
+import { revalidateClientNow } from '../lib/revalidation';
 import {
     type CreateTrainingBlockFieldErrors,
     validateCreateTrainingBlockForm
@@ -38,6 +38,6 @@ export async function createTrainingBlockAction(
         return { error: TrainingBlockActionMessages.CreateFailed };
     }
 
-    revalidateClientTrainingNow({ clientId });
+    revalidateClientNow({ clientId });
     redirectToTrainingBlock({ trainingBlockId: result.value.id });
 }

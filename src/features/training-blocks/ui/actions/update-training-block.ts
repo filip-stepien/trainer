@@ -4,7 +4,7 @@ import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
 import { updateTrainingBlock } from '../../composition';
 import { TrainingBlockActionMessages, TrainingBlockNotFoundMessages } from '../lib/messages';
-import { revalidateClientTrainingNow, revalidateTrainingBlockNow } from '../lib/revalidation';
+import { revalidateClientNow, revalidateTrainingBlockNow } from '../lib/revalidation';
 import {
     type UpdateTrainingBlockFieldErrors,
     validateUpdateTrainingBlockForm
@@ -34,7 +34,7 @@ export async function updateTrainingBlockAction(
         return { error: TrainingBlockNotFoundMessages.Draft };
     }
 
-    revalidateClientTrainingNow({ clientId: result.value.clientId });
+    revalidateClientNow({ clientId: result.value.clientId });
     revalidateTrainingBlockNow({ trainingBlockId });
     return { success: TrainingBlockActionMessages.TrainingBlockSaved };
 }

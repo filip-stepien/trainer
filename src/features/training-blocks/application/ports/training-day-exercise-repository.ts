@@ -39,6 +39,7 @@ export type UpdateTrainingDayExerciseByIdParams = {
 export type UpdateAllTrainingDayExercisesData = {
     trainingDayExerciseId: string;
     position: number;
+    isLinkedToPrevious: boolean;
 };
 
 export type UpdateAllTrainingDayExercisesParams = {

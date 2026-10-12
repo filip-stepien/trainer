@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useFormAction } from '@/shared/client';
 
 import {
     moveTrainingDayAction,
@@ -10,11 +10,5 @@ import {
 const initialState: MoveTrainingDayActionState = {};
 
 export function useMoveTrainingDay() {
-    const [state, formAction, isPending] = useActionState(
-        (_prevState: MoveTrainingDayActionState, formData: FormData) =>
-            moveTrainingDayAction(formData),
-        initialState
-    );
-
-    return { state, formAction, isPending };
+    return useFormAction(moveTrainingDayAction, initialState, { toastErrors: true });
 }

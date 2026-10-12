@@ -17,3 +17,7 @@ export type Client = {
     createdAt: string;
     updatedAt: string;
 };
+
+export function getClientFullName({ firstName, lastName }: Pick<Client, 'firstName' | 'lastName'>) {
+    return `${firstName} ${lastName}`;
+}

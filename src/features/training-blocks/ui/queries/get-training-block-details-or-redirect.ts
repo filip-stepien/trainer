@@ -19,9 +19,10 @@ import type { TrainingDay } from '../../domain/training-day';
 import type {
     TrainingDayExercise,
     TrainingDayExerciseSection,
+    TrainingDayExerciseSet,
     TrainingDayExerciseTargetType
 } from '../../domain/training-day-exercise';
-import { redirectToClientList, redirectToClientTraining } from '../lib/navigation';
+import { redirectToClient, redirectToClientList } from '../lib/navigation';
 import { validateTrainingBlockId } from '../lib/validation';
 
 export type TrainingBlockDetails = {
@@ -53,16 +54,13 @@ export type TrainingDayExerciseDetails = {
     id: string;
     exerciseId: string;
     section: TrainingDayExerciseSection;
+    isLinkedToPrevious: boolean;
     name: string;
     instructions: string | null;
     videoUrl: string | null;
-    sets: number | null;
     targetType: TrainingDayExerciseTargetType;
-    reps: string | null;
-    durationSeconds: number | null;
-    load: string | null;
+    sets: TrainingDayExerciseSet[];
     tempo: string | null;
-    rir: string | null;
     restSeconds: number | null;
     notes: string | null;
 };
@@ -79,16 +77,13 @@ function toTrainingDayExerciseDetails(exercise: TrainingDayExercise): TrainingDa
         id: exercise.id,
         exerciseId: exercise.exerciseId,
         section: exercise.section,
+        isLinkedToPrevious: exercise.isLinkedToPrevious,
         name: exercise.name,
         instructions: exercise.instructions,
         videoUrl: exercise.videoUrl,
-        sets: exercise.sets,
         targetType: exercise.targetType,
-        reps: exercise.reps,
-        durationSeconds: exercise.durationSeconds,
-        load: exercise.load,
+        sets: exercise.sets,
         tempo: exercise.tempo,
-        rir: exercise.rir,
         restSeconds: exercise.restSeconds,
         notes: exercise.notes
     };
@@ -163,7 +158,7 @@ export async function getTrainingBlockDetailsOrRedirect({
 
     const draftVersion = result.value.draftVersion;
     if (!draftVersion) {
-        redirectToClientTraining({ clientId: result.value.clientId });
+        redirectToClient({ clientId: result.value.clientId });
     }
 
     const [trainingDays, trainingDayExercises, exerciseOptions] = await Promise.all([

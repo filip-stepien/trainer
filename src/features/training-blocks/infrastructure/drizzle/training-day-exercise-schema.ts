@@ -1,8 +1,10 @@
 import { sql } from 'drizzle-orm';
 import {
+    boolean,
     check,
     index,
     integer,
+    jsonb,
     pgEnum,
     pgTable,
     text,
@@ -14,6 +16,7 @@ import {
 import { exercisesTable } from '@/features/exercises/infrastructure/drizzle/exercise-schema';
 
 import {
+    type TrainingDayExerciseSet,
     TrainingDayExerciseSection,
     TrainingDayExerciseTargetType
 } from '../../domain/training-day-exercise';
@@ -41,18 +44,18 @@ export const trainingDayExercisesTable = pgTable(
             .references(() => exercisesTable.id, { onDelete: 'restrict' }),
         section: trainingDayExerciseSectionEnum('section').notNull(),
         position: integer('position').notNull(),
+        isLinkedToPrevious: boolean('is_linked_to_previous').notNull().default(false),
         name: varchar('name', { length: 150 }).notNull(),
         instructions: text('instructions'),
         videoUrl: text('video_url'),
-        sets: integer('sets'),
         targetType: trainingDayExerciseTargetTypeEnum('target_type')
             .notNull()
             .default(TrainingDayExerciseTargetType.Repetitions),
-        reps: varchar('reps', { length: 50 }),
-        durationSeconds: integer('duration_seconds'),
-        load: varchar('load', { length: 50 }),
+        sets: jsonb('sets')
+            .$type<TrainingDayExerciseSet[]>()
+            .notNull()
+            .default(sql`'[]'::jsonb`),
         tempo: varchar('tempo', { length: 50 }),
-        rir: varchar('rir', { length: 50 }),
         restSeconds: integer('rest_seconds'),
         notes: text('notes'),
         createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -68,19 +71,11 @@ export const trainingDayExercisesTable = pgTable(
         check('training_day_exercises_position_check', sql`${table.position} >= 0`),
         check(
             'training_day_exercises_sets_check',
-            sql`${table.sets} is null or (${table.sets} >= 1 and ${table.sets} <= 100)`
+            sql`jsonb_typeof(${table.sets}) = 'array' and jsonb_array_length(${table.sets}) <= 100`
         ),
         check(
             'training_day_exercises_rest_seconds_check',
             sql`${table.restSeconds} is null or (${table.restSeconds} >= 0 and ${table.restSeconds} <= 3600)`
-        ),
-        check(
-            'training_day_exercises_duration_seconds_check',
-            sql`${table.durationSeconds} is null or (${table.durationSeconds} >= 1 and ${table.durationSeconds} <= 86400)`
-        ),
-        check(
-            'training_day_exercises_target_check',
-            sql`(${table.targetType} = 'repetitions' and ${table.durationSeconds} is null) or (${table.targetType} = 'duration' and ${table.reps} is null and ${table.durationSeconds} is not null)`
         )
     ]
 );
