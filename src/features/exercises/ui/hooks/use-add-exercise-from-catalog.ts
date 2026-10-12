@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useFormAction } from '@/shared/client';
 
 import {
     addExerciseFromCatalogAction,
@@ -10,11 +10,5 @@ import {
 const initialState: AddExerciseFromCatalogActionState = {};
 
 export function useAddExerciseFromCatalog() {
-    const [state, formAction, isPending] = useActionState(
-        (_prevState: AddExerciseFromCatalogActionState, formData: FormData) =>
-            addExerciseFromCatalogAction(formData),
-        initialState
-    );
-
-    return { state, formAction, isPending };
+    return useFormAction(addExerciseFromCatalogAction, initialState, { toastErrors: true });
 }

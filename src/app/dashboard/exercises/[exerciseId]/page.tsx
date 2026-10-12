@@ -1,32 +1,55 @@
 import { Suspense } from 'react';
 
-import { EditExerciseForm, ExerciseProfile } from '@/features/exercises';
+import {
+    EditExerciseDialog,
+    ExerciseBadges,
+    ExerciseOverview,
+    ExerciseStatusForm,
+    getExerciseListPath
+} from '@/features/exercises';
 import { getExerciseDetailsOrRedirect } from '@/features/exercises/server';
-
-import { DashboardPageLoading } from '../../_components/dashboard-page-loading';
+import { PageContainer, PageHeader, PageSkeleton } from '@/shared';
 
 type ExercisePageProps = {
     params: Promise<{ exerciseId: string }>;
 };
 
-export default function ExercisePage({ params }: ExercisePageProps) {
-    return (
-        <main className='mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-6'>
-            <Suspense fallback={<DashboardPageLoading />}>
-                <ExerciseDetails params={params} />
-            </Suspense>
-        </main>
-    );
-}
-
-async function ExerciseDetails({ params }: ExercisePageProps) {
+async function ExerciseDetailsContent({ params }: ExercisePageProps) {
     const { exerciseId } = await params;
     const exercise = await getExerciseDetailsOrRedirect({ exerciseId });
 
     return (
         <>
-            <ExerciseProfile exercise={exercise} />
-            <EditExerciseForm exercise={exercise} />
+            <PageHeader
+                breadcrumbs={[
+                    { label: 'Biblioteka ćwiczeń', href: getExerciseListPath() },
+                    { label: exercise.name }
+                ]}
+                title={exercise.name}
+                badges={<ExerciseBadges isCustom={exercise.isCustom} status={exercise.status} />}
+                description={
+                    exercise.isCustom
+                        ? 'Własna definicja ćwiczenia.'
+                        : 'Edytowalna kopia ćwiczenia dodanego z katalogu.'
+                }
+                actions={
+                    <>
+                        <ExerciseStatusForm exerciseId={exercise.id} status={exercise.status} />
+                        <EditExerciseDialog exercise={exercise} />
+                    </>
+                }
+            />
+            <ExerciseOverview exercise={exercise} />
         </>
+    );
+}
+
+export default function ExercisePage({ params }: ExercisePageProps) {
+    return (
+        <PageContainer>
+            <Suspense fallback={<PageSkeleton tiles={2} />}>
+                <ExerciseDetailsContent params={params} />
+            </Suspense>
+        </PageContainer>
     );
 }

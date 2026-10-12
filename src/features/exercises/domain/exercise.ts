@@ -17,3 +17,11 @@ export type Exercise = {
     createdAt: string;
     updatedAt: string;
 };
+
+export function isExerciseArchived({ status }: Pick<Exercise, 'status'>) {
+    return status === ExerciseStatus.Archived;
+}
+
+export function getOppositeExerciseStatus({ status }: Pick<Exercise, 'status'>) {
+    return isExerciseArchived({ status }) ? ExerciseStatus.Active : ExerciseStatus.Archived;
+}

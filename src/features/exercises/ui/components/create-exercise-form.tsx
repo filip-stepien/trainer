@@ -2,17 +2,7 @@
 
 import Link from 'next/link';
 
-import {
-    Button,
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-    FieldError,
-    Spinner
-} from '@/shared';
+import { Button, Card, CardContent, CardFooter, FieldError, Spinner } from '@/shared';
 
 import { useCreateExercise } from '../hooks/use-create-exercise';
 import { getExerciseListPath } from '../lib/routes';
@@ -22,22 +12,15 @@ export function CreateExerciseForm() {
     const { state, formAction, isPending } = useCreateExercise();
 
     return (
-        <form action={formAction}>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Nowe ćwiczenie</CardTitle>
-                    <CardDescription>
-                        Dodaj definicję, którą wykorzystasz później w wielu planach treningowych.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
+        <Card>
+            <form action={formAction} className='flex flex-col gap-4'>
+                <CardContent className='flex flex-col gap-6'>
                     <ExerciseFormFields errors={state.fieldErrors} />
-                    {state.error ? <FieldError className='mt-5'>{state.error}</FieldError> : null}
+                    {state.error ? <FieldError>{state.error}</FieldError> : null}
                 </CardContent>
-                <CardFooter className='justify-end gap-2'>
+                <CardFooter className='justify-between gap-2'>
                     <Button
-                        type='button'
-                        variant='outline'
+                        variant='ghost'
                         render={<Link href={getExerciseListPath()} />}
                         nativeButton={false}
                     >
@@ -48,7 +31,7 @@ export function CreateExerciseForm() {
                         {isPending ? 'Dodawanie…' : 'Dodaj ćwiczenie'}
                     </Button>
                 </CardFooter>
-            </Card>
-        </form>
+            </form>
+        </Card>
     );
 }

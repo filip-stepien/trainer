@@ -4,7 +4,7 @@ import { getAuthenticatedUserOrRedirect } from '@/features/auth/server';
 
 import type { CatalogExercise } from '../../application/use-cases/list-catalog-exercises';
 import { listCatalogExercises, listLibraryExercises } from '../../composition';
-import type { Exercise } from '../../domain/exercise';
+import { type Exercise, isExerciseArchived } from '../../domain/exercise';
 import { ExerciseListStatus, ExerciseListView } from '../lib/routes';
 import { type ExerciseListSearchParams, validateExerciseListSearchParams } from '../lib/validation';
 
@@ -16,7 +16,7 @@ export type ExerciseLibraryListItem = Pick<
 >;
 
 export type ExerciseCatalogListItem = Pick<Exercise, 'id' | 'name'> & {
-    libraryExercise: Pick<Exercise, 'id' | 'status'> | null;
+    activeLibraryExerciseId: string | null;
 };
 
 function toExerciseCatalogListItem({
@@ -26,9 +26,8 @@ function toExerciseCatalogListItem({
     return {
         id: exercise.id,
         name: exercise.name,
-        libraryExercise: libraryExercise
-            ? { id: libraryExercise.id, status: libraryExercise.status }
-            : null
+        activeLibraryExerciseId:
+            libraryExercise && !isExerciseArchived(libraryExercise) ? libraryExercise.id : null
     };
 }
 

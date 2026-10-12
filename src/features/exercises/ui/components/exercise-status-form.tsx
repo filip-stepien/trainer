@@ -2,28 +2,34 @@
 
 import { ArchiveIcon, ArchiveRestoreIcon } from 'lucide-react';
 
-import { Button, FieldError, Spinner } from '@/shared';
+import { Button, Spinner, cn } from '@/shared';
 
-import { ExerciseStatus, type ExerciseStatus as ExerciseStatusValue } from '../../domain/exercise';
+import {
+    type ExerciseStatus,
+    getOppositeExerciseStatus,
+    isExerciseArchived
+} from '../../domain/exercise';
 import { useSetExerciseStatus } from '../hooks/use-set-exercise-status';
 
 export function ExerciseStatusForm({
     exerciseId,
-    status
+    status,
+    variant = 'outline',
+    className
 }: {
     exerciseId: string;
-    status: ExerciseStatusValue;
+    status: ExerciseStatus;
+    variant?: 'outline' | 'ghost';
+    className?: string;
 }) {
-    const { state, formAction, isPending } = useSetExerciseStatus();
-    const archived = status === ExerciseStatus.Archived;
-    const nextStatus = archived ? ExerciseStatus.Active : ExerciseStatus.Archived;
-    const label = archived ? 'Przywróć' : 'Archiwizuj';
+    const { formAction, isPending } = useSetExerciseStatus();
+    const archived = isExerciseArchived({ status });
 
     return (
-        <form action={formAction} className='flex flex-col items-end gap-1'>
+        <form action={formAction} className={cn('flex', className)}>
             <input type='hidden' name='exerciseId' value={exerciseId} />
-            <input type='hidden' name='status' value={nextStatus} />
-            <Button type='submit' variant='outline' size='sm' disabled={isPending}>
+            <input type='hidden' name='status' value={getOppositeExerciseStatus({ status })} />
+            <Button type='submit' variant={variant} size='sm' disabled={isPending}>
                 {isPending ? (
                     <Spinner data-icon='inline-start' />
                 ) : archived ? (
@@ -31,9 +37,8 @@ export function ExerciseStatusForm({
                 ) : (
                     <ArchiveIcon data-icon='inline-start' />
                 )}
-                {isPending ? 'Zapisywanie…' : label}
+                {archived ? 'Przywróć' : 'Archiwizuj'}
             </Button>
-            {state.error ? <FieldError aria-live='polite'>{state.error}</FieldError> : null}
         </form>
     );
 }

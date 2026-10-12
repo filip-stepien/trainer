@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useFormAction } from '@/shared/client';
 
 import {
     setExerciseStatusAction,
@@ -10,11 +10,5 @@ import {
 const initialState: SetExerciseStatusActionState = {};
 
 export function useSetExerciseStatus() {
-    const [state, formAction, isPending] = useActionState(
-        (_prevState: SetExerciseStatusActionState, formData: FormData) =>
-            setExerciseStatusAction(formData),
-        initialState
-    );
-
-    return { state, formAction, isPending };
+    return useFormAction(setExerciseStatusAction, initialState, { toastErrors: true });
 }

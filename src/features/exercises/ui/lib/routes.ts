@@ -20,6 +20,10 @@ export function getExerciseListPath() {
     return exerciseListPath;
 }
 
+export function isExerciseSectionPath({ pathname }: { pathname: string }) {
+    return pathname === exerciseListPath || pathname.startsWith(`${exerciseListPath}/`);
+}
+
 export function getExerciseListHref({
     page,
     search,

@@ -1,17 +1,11 @@
 'use client';
 
-import { useActionState } from 'react';
+import { type FormActionOptions, useFormAction } from '@/shared/client';
 
-import { type UpdateExerciseActionState, updateExerciseAction } from '../actions/update-exercise';
+import { updateExerciseAction, type UpdateExerciseActionState } from '../actions/update-exercise';
 
 const initialState: UpdateExerciseActionState = {};
 
-export function useUpdateExercise() {
-    const [state, formAction, isPending] = useActionState(
-        (_prevState: UpdateExerciseActionState, formData: FormData) =>
-            updateExerciseAction(formData),
-        initialState
-    );
-
-    return { state, formAction, isPending };
+export function useUpdateExercise(options?: FormActionOptions<UpdateExerciseActionState>) {
+    return useFormAction(updateExerciseAction, initialState, options);
 }

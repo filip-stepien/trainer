@@ -1,13 +1,18 @@
 import Link from 'next/link';
-import { DumbbellIcon, ExternalLinkIcon, PlusIcon, SearchIcon } from 'lucide-react';
+import {
+    ArrowRightIcon,
+    BookOpenIcon,
+    CheckIcon,
+    DumbbellIcon,
+    ExternalLinkIcon,
+    LibraryIcon,
+    PlusIcon
+} from 'lucide-react';
 
 import {
     Badge,
     Button,
-    Card,
-    CardAction,
     CardContent,
-    CardDescription,
     CardFooter,
     CardHeader,
     CardTitle,
@@ -17,31 +22,22 @@ import {
     EmptyHeader,
     EmptyMedia,
     EmptyTitle,
-    Field,
-    FieldGroup,
-    FieldLabel,
-    Input,
-    NativeSelect,
-    NativeSelectOption,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
     Tabs,
-    TabsContent,
     TabsList,
     TabsTrigger,
-    buttonVariants
+    Tile,
+    TileGrid,
+    TileLink,
+    buttonVariants,
+    cn
 } from '@/shared';
 
-import { ExerciseStatus } from '../../domain/exercise';
+import { isExerciseArchived } from '../../domain/exercise';
+import { exerciseListStatusOptions } from '../lib/filtering';
 import {
     ExerciseListStatus,
     ExerciseListView,
     getExerciseListHref,
-    getExerciseListPath,
     getExercisePath,
     getNewExercisePath
 } from '../lib/routes';
@@ -51,343 +47,322 @@ import type {
     ExerciseListResult
 } from '../queries/get-exercise-list-or-redirect';
 import { AddExerciseFromCatalogForm } from './add-exercise-from-catalog-form';
+import { ExerciseBadges } from './exercise-badges';
+import { ExerciseSearch } from './exercise-search';
 import { ExerciseStatusForm } from './exercise-status-form';
 
-function ExerciseFilters({ result }: { result: ExerciseListResult }) {
-    const { filters } = result;
-    const hasFilters =
-        filters.search ||
-        (result.view === ExerciseListView.Library && filters.status !== ExerciseListStatus.Active);
-
+function ExerciseViewTabs({ view }: { view: ExerciseListView }) {
     return (
-        <form action={getExerciseListPath()} className='flex flex-col gap-4 md:flex-row'>
-            <input type='hidden' name='view' value={result.view} />
-            <FieldGroup className='flex-1 md:flex-row'>
-                <Field className='flex-1'>
-                    <FieldLabel htmlFor='exercise-search'>Nazwa ćwiczenia</FieldLabel>
-                    <Input
-                        id='exercise-search'
-                        name='search'
-                        type='search'
-                        maxLength={150}
-                        defaultValue={filters.search}
-                        placeholder='Np. Barbell squat'
-                    />
-                </Field>
-                {result.view === ExerciseListView.Library ? (
-                    <Field className='md:max-w-48'>
-                        <FieldLabel htmlFor='exercise-status'>Status</FieldLabel>
-                        <NativeSelect
-                            id='exercise-status'
-                            name='status'
-                            defaultValue={filters.status}
-                            className='w-full'
-                        >
-                            <NativeSelectOption value={ExerciseListStatus.Active}>
-                                Aktywne
-                            </NativeSelectOption>
-                            <NativeSelectOption value={ExerciseListStatus.Archived}>
-                                Archiwalne
-                            </NativeSelectOption>
-                            <NativeSelectOption value={ExerciseListStatus.All}>
-                                Wszystkie
-                            </NativeSelectOption>
-                        </NativeSelect>
-                    </Field>
-                ) : null}
-            </FieldGroup>
-            <div className='flex items-end gap-2'>
-                <Button type='submit' variant='outline'>
-                    <SearchIcon data-icon='inline-start' />
-                    Filtruj
-                </Button>
-                {hasFilters ? (
-                    <Link
-                        href={getExerciseListHref({
-                            view: result.view,
-                            page: 1,
-                            search: '',
-                            status: ExerciseListStatus.Active
-                        })}
-                        className={buttonVariants({ variant: 'ghost' })}
+        <Tabs value={view} className='border-b'>
+            <TabsList variant='line'>
+                <TabsTrigger
+                    value={ExerciseListView.Library}
+                    nativeButton={false}
+                    render={
+                        <Link
+                            href={getExerciseListHref({
+                                view: ExerciseListView.Library,
+                                page: 1,
+                                search: '',
+                                status: ExerciseListStatus.Active
+                            })}
+                        />
+                    }
+                >
+                    <LibraryIcon />
+                    Moja biblioteka
+                </TabsTrigger>
+                <TabsTrigger
+                    value={ExerciseListView.Catalog}
+                    nativeButton={false}
+                    render={
+                        <Link
+                            href={getExerciseListHref({
+                                view: ExerciseListView.Catalog,
+                                page: 1,
+                                search: '',
+                                status: ExerciseListStatus.Active
+                            })}
+                        />
+                    }
+                >
+                    <BookOpenIcon />
+                    Katalog
+                </TabsTrigger>
+            </TabsList>
+        </Tabs>
+    );
+}
+
+function ExerciseStatusFilter({ search, status }: { search: string; status: ExerciseListStatus }) {
+    return (
+        <Tabs value={status}>
+            <TabsList aria-label='Filtruj po statusie'>
+                {exerciseListStatusOptions.map(option => (
+                    <TabsTrigger
+                        key={option.value}
+                        value={option.value}
+                        nativeButton={false}
+                        render={
+                            <Link
+                                href={getExerciseListHref({
+                                    view: ExerciseListView.Library,
+                                    page: 1,
+                                    search,
+                                    status: option.value
+                                })}
+                            />
+                        }
                     >
-                        Wyczyść
-                    </Link>
-                ) : null}
-            </div>
-        </form>
-    );
-}
-
-function ExerciseLibraryTable({ exercises }: { exercises: ExerciseLibraryListItem[] }) {
-    return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Ćwiczenie</TableHead>
-                    <TableHead>Źródło</TableHead>
-                    <TableHead>Materiały</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className='text-right'>Akcje</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {exercises.map(exercise => (
-                    <TableRow key={exercise.id}>
-                        <TableCell className='max-w-md'>
-                            <div className='flex flex-col gap-1'>
-                                <Link
-                                    href={getExercisePath({ exerciseId: exercise.id })}
-                                    className={buttonVariants({ variant: 'link' })}
-                                >
-                                    {exercise.name}
-                                </Link>
-                                {exercise.instructions ? (
-                                    <span className='text-muted-foreground line-clamp-2 text-sm'>
-                                        {exercise.instructions}
-                                    </span>
-                                ) : null}
-                            </div>
-                        </TableCell>
-                        <TableCell>
-                            <Badge variant={exercise.isCustom ? 'default' : 'secondary'}>
-                                {exercise.isCustom ? 'Własne' : 'Z katalogu'}
-                            </Badge>
-                        </TableCell>
-                        <TableCell>
-                            {exercise.videoUrl ? (
-                                <a
-                                    href={exercise.videoUrl}
-                                    target='_blank'
-                                    rel='noreferrer'
-                                    className={buttonVariants({ variant: 'link', size: 'sm' })}
-                                >
-                                    Film
-                                    <ExternalLinkIcon data-icon='inline-end' />
-                                </a>
-                            ) : (
-                                <span className='text-muted-foreground'>Brak</span>
-                            )}
-                        </TableCell>
-                        <TableCell>
-                            <Badge
-                                variant={
-                                    exercise.status === ExerciseStatus.Archived
-                                        ? 'secondary'
-                                        : 'outline'
-                                }
-                            >
-                                {exercise.status === ExerciseStatus.Archived
-                                    ? 'Archiwalne'
-                                    : 'Aktywne'}
-                            </Badge>
-                        </TableCell>
-                        <TableCell>
-                            <div className='flex justify-end'>
-                                <ExerciseStatusForm
-                                    exerciseId={exercise.id}
-                                    status={exercise.status}
-                                />
-                            </div>
-                        </TableCell>
-                    </TableRow>
+                        {option.label}
+                    </TabsTrigger>
                 ))}
-            </TableBody>
-        </Table>
+            </TabsList>
+        </Tabs>
     );
 }
 
-function ExerciseCatalogTable({ exercises }: { exercises: ExerciseCatalogListItem[] }) {
+function ExerciseLibraryTile({ exercise }: { exercise: ExerciseLibraryListItem }) {
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Ćwiczenie</TableHead>
-                    <TableHead>Biblioteka</TableHead>
-                    <TableHead className='text-right'>Akcje</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {exercises.map(exercise => {
-                    const libraryExercise = exercise.libraryExercise;
-                    const added = libraryExercise?.status === ExerciseStatus.Active;
-
-                    return (
-                        <TableRow key={exercise.id}>
-                            <TableCell className='font-medium'>{exercise.name}</TableCell>
-                            <TableCell>
-                                <Badge variant={added ? 'outline' : 'secondary'}>
-                                    {added ? 'Dodane' : 'Dostępne'}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>
-                                <div className='flex justify-end'>
-                                    {libraryExercise && added ? (
-                                        <Link
-                                            href={getExercisePath({
-                                                exerciseId: libraryExercise.id
-                                            })}
-                                            className={buttonVariants({
-                                                variant: 'outline',
-                                                size: 'sm'
-                                            })}
-                                        >
-                                            Edytuj
-                                        </Link>
-                                    ) : (
-                                        <AddExerciseFromCatalogForm
-                                            sourceExerciseId={exercise.id}
-                                        />
-                                    )}
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    );
-                })}
-            </TableBody>
-        </Table>
+        <Tile interactive className={cn(isExerciseArchived(exercise) && 'opacity-75')}>
+            <CardHeader>
+                <CardTitle className='line-clamp-2'>
+                    <TileLink href={getExercisePath({ exerciseId: exercise.id })}>
+                        {exercise.name}
+                    </TileLink>
+                </CardTitle>
+            </CardHeader>
+            <CardContent className='flex flex-1 flex-col gap-3'>
+                <ExerciseBadges isCustom={exercise.isCustom} status={exercise.status} />
+                <p className='text-muted-foreground line-clamp-3 text-sm'>
+                    {exercise.instructions || 'Brak instrukcji technicznej.'}
+                </p>
+            </CardContent>
+            <CardFooter className='justify-between gap-2'>
+                {exercise.videoUrl ? (
+                    <a
+                        href={exercise.videoUrl}
+                        target='_blank'
+                        rel='noreferrer'
+                        className={buttonVariants({
+                            variant: 'ghost',
+                            size: 'sm',
+                            className: 'relative z-10 -ml-2'
+                        })}
+                    >
+                        Film
+                        <ExternalLinkIcon data-icon='inline-end' />
+                    </a>
+                ) : (
+                    <span className='text-muted-foreground text-xs'>Bez filmu</span>
+                )}
+                <ExerciseStatusForm
+                    exerciseId={exercise.id}
+                    status={exercise.status}
+                    variant='ghost'
+                    className='relative z-10'
+                />
+            </CardFooter>
+        </Tile>
     );
 }
 
-function ExerciseListEmpty({ view }: { view: ExerciseListResult['view'] }) {
+function ExerciseCatalogTile({ exercise }: { exercise: ExerciseCatalogListItem }) {
+    const libraryExerciseId = exercise.activeLibraryExerciseId;
+
     return (
-        <Empty>
+        <Tile interactive={Boolean(libraryExerciseId)}>
+            <CardHeader>
+                <CardTitle className='line-clamp-2'>
+                    {libraryExerciseId ? (
+                        <TileLink href={getExercisePath({ exerciseId: libraryExerciseId })}>
+                            {exercise.name}
+                        </TileLink>
+                    ) : (
+                        exercise.name
+                    )}
+                </CardTitle>
+            </CardHeader>
+            <CardFooter className='mt-auto justify-between gap-2'>
+                {libraryExerciseId ? (
+                    <>
+                        <Badge variant='outline'>
+                            <CheckIcon />W bibliotece
+                        </Badge>
+                        <span className='flex items-center gap-1 text-sm font-medium'>
+                            Otwórz
+                            <ArrowRightIcon className='size-4' />
+                        </span>
+                    </>
+                ) : (
+                    <>
+                        <span className='text-muted-foreground text-xs'>Dostępne w katalogu</span>
+                        <AddExerciseFromCatalogForm
+                            sourceExerciseId={exercise.id}
+                            className='relative z-10'
+                        />
+                    </>
+                )}
+            </CardFooter>
+        </Tile>
+    );
+}
+
+function ExerciseListEmpty({ result }: { result: ExerciseListResult }) {
+    const { filters, view } = result;
+
+    if (filters.search) {
+        return (
+            <Empty className='border'>
+                <EmptyHeader>
+                    <EmptyMedia variant='icon'>
+                        <DumbbellIcon />
+                    </EmptyMedia>
+                    <EmptyTitle>Nic nie pasuje do „{filters.search}”</EmptyTitle>
+                    <EmptyDescription>
+                        Spróbuj innej nazwy albo sprawdź pozostałe zakładki.
+                    </EmptyDescription>
+                </EmptyHeader>
+            </Empty>
+        );
+    }
+
+    if (view === ExerciseListView.Catalog) {
+        return (
+            <Empty className='border'>
+                <EmptyHeader>
+                    <EmptyMedia variant='icon'>
+                        <BookOpenIcon />
+                    </EmptyMedia>
+                    <EmptyTitle>Katalog jest pusty</EmptyTitle>
+                </EmptyHeader>
+            </Empty>
+        );
+    }
+
+    return (
+        <Empty className='border'>
             <EmptyHeader>
                 <EmptyMedia variant='icon'>
                     <DumbbellIcon />
                 </EmptyMedia>
-                <EmptyTitle>Nie znaleziono ćwiczeń</EmptyTitle>
+                <EmptyTitle>
+                    {filters.status === ExerciseListStatus.Archived
+                        ? 'Brak ćwiczeń w archiwum'
+                        : 'Twoja biblioteka jest pusta'}
+                </EmptyTitle>
                 <EmptyDescription>
-                    {view === ExerciseListView.Library
-                        ? 'Zmień filtry, dodaj własne ćwiczenie albo wybierz je z katalogu.'
-                        : 'Zmień wyszukiwaną frazę, aby zobaczyć inne ćwiczenia z katalogu.'}
+                    Dodaj własne ćwiczenie albo skopiuj gotowe z katalogu.
                 </EmptyDescription>
             </EmptyHeader>
-            {view === ExerciseListView.Library ? (
-                <EmptyContent className='flex-row'>
-                    <Link href={getNewExercisePath()} className={buttonVariants()}>
-                        <PlusIcon data-icon='inline-start' />
-                        Dodaj własne
-                    </Link>
-                    <Link
-                        href={getExerciseListHref({
-                            view: ExerciseListView.Catalog,
-                            page: 1,
-                            search: '',
-                            status: ExerciseListStatus.Active
-                        })}
-                        className={buttonVariants({ variant: 'outline' })}
-                    >
-                        Przejdź do katalogu
-                    </Link>
-                </EmptyContent>
-            ) : null}
+            <EmptyContent className='flex-row justify-center'>
+                <Button render={<Link href={getNewExercisePath()} />} nativeButton={false}>
+                    <PlusIcon data-icon='inline-start' />
+                    Dodaj własne
+                </Button>
+                <Button
+                    variant='outline'
+                    render={
+                        <Link
+                            href={getExerciseListHref({
+                                view: ExerciseListView.Catalog,
+                                page: 1,
+                                search: '',
+                                status: ExerciseListStatus.Active
+                            })}
+                        />
+                    }
+                    nativeButton={false}
+                >
+                    Przejdź do katalogu
+                </Button>
+            </EmptyContent>
         </Empty>
     );
 }
 
-export function ExerciseList({ result }: { result: ExerciseListResult }) {
+function ExercisePagination({ result }: { result: ExerciseListResult }) {
     const { filters, pagination } = result;
 
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Biblioteka ćwiczeń</CardTitle>
-                <CardDescription>
-                    Zarządzaj własnymi ćwiczeniami lub dodawaj gotowe pozycje z katalogu.
-                </CardDescription>
-                <CardAction>
-                    <Link href={getNewExercisePath()} className={buttonVariants()}>
-                        <PlusIcon data-icon='inline-start' />
-                        Dodaj własne
-                    </Link>
-                </CardAction>
-            </CardHeader>
-            <CardContent>
-                <Tabs value={result.view}>
-                    <TabsList>
-                        <TabsTrigger
-                            value={ExerciseListView.Library}
-                            nativeButton={false}
-                            render={
-                                <Link
-                                    href={getExerciseListHref({
-                                        view: ExerciseListView.Library,
-                                        page: 1,
-                                        search: '',
-                                        status: ExerciseListStatus.Active
-                                    })}
-                                />
-                            }
-                        >
-                            Moja biblioteka
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value={ExerciseListView.Catalog}
-                            nativeButton={false}
-                            render={
-                                <Link
-                                    href={getExerciseListHref({
-                                        view: ExerciseListView.Catalog,
-                                        page: 1,
-                                        search: '',
-                                        status: ExerciseListStatus.Active
-                                    })}
-                                />
-                            }
-                        >
-                            Katalog
-                        </TabsTrigger>
-                    </TabsList>
+    if (!pagination.hasPreviousPage && !pagination.hasNextPage) {
+        return null;
+    }
 
-                    <TabsContent value={result.view} className='flex flex-col gap-6 pt-4'>
-                        <ExerciseFilters result={result} />
-                        {result.exercises.length === 0 ? (
-                            <ExerciseListEmpty view={result.view} />
-                        ) : result.view === ExerciseListView.Library ? (
-                            <ExerciseLibraryTable exercises={result.exercises} />
-                        ) : (
-                            <ExerciseCatalogTable exercises={result.exercises} />
-                        )}
-                    </TabsContent>
-                </Tabs>
-            </CardContent>
-            <CardFooter className='justify-end gap-2'>
+    function getPageHref(page: number) {
+        return getExerciseListHref({
+            view: result.view,
+            page,
+            search: filters.search,
+            status: filters.status
+        });
+    }
+
+    return (
+        <nav className='flex items-center justify-between gap-2' aria-label='Strony'>
+            <span className='text-muted-foreground text-sm'>Strona {pagination.page}</span>
+            <div className='flex gap-2'>
                 {pagination.hasPreviousPage ? (
                     <Link
-                        href={getExerciseListHref({
-                            view: result.view,
-                            page: pagination.page - 1,
-                            search: filters.search,
-                            status: filters.status
-                        })}
+                        href={getPageHref(pagination.page - 1)}
                         className={buttonVariants({ variant: 'outline', size: 'sm' })}
                     >
                         Poprzednia
                     </Link>
                 ) : (
-                    <Button type='button' variant='outline' size='sm' disabled>
+                    <Button variant='outline' size='sm' disabled>
                         Poprzednia
                     </Button>
                 )}
                 {pagination.hasNextPage ? (
                     <Link
-                        href={getExerciseListHref({
-                            view: result.view,
-                            page: pagination.page + 1,
-                            search: filters.search,
-                            status: filters.status
-                        })}
+                        href={getPageHref(pagination.page + 1)}
                         className={buttonVariants({ variant: 'outline', size: 'sm' })}
                     >
                         Następna
                     </Link>
                 ) : (
-                    <Button type='button' variant='outline' size='sm' disabled>
+                    <Button variant='outline' size='sm' disabled>
                         Następna
                     </Button>
                 )}
-            </CardFooter>
-        </Card>
+            </div>
+        </nav>
+    );
+}
+
+export function ExerciseList({ result }: { result: ExerciseListResult }) {
+    const { filters } = result;
+
+    return (
+        <div className='flex flex-col gap-4'>
+            <ExerciseViewTabs view={result.view} />
+            <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+                <ExerciseSearch
+                    key={result.view}
+                    view={result.view}
+                    status={filters.status}
+                    search={filters.search}
+                />
+                {result.view === ExerciseListView.Library ? (
+                    <ExerciseStatusFilter search={filters.search} status={filters.status} />
+                ) : null}
+            </div>
+            {result.exercises.length === 0 ? (
+                <ExerciseListEmpty result={result} />
+            ) : result.view === ExerciseListView.Library ? (
+                <TileGrid>
+                    {result.exercises.map(exercise => (
+                        <ExerciseLibraryTile key={exercise.id} exercise={exercise} />
+                    ))}
+                </TileGrid>
+            ) : (
+                <TileGrid columns={4}>
+                    {result.exercises.map(exercise => (
+                        <ExerciseCatalogTile key={exercise.id} exercise={exercise} />
+                    ))}
+                </TileGrid>
+            )}
+            <ExercisePagination result={result} />
+        </div>
     );
 }
