@@ -12,7 +12,7 @@ const exercisePageSize = 50;
 
 export type ExerciseLibraryListItem = Pick<
     Exercise,
-    'id' | 'sourceExerciseId' | 'isCustom' | 'name' | 'instructions' | 'videoUrl' | 'status'
+    'id' | 'sourceExerciseId' | 'isCustom' | 'name' | 'instructions' | 'status'
 >;
 
 export type ExerciseCatalogListItem = Pick<Exercise, 'id' | 'name'> & {
@@ -38,7 +38,6 @@ function toExerciseLibraryListItem(exercise: Exercise): ExerciseLibraryListItem 
         isCustom: exercise.isCustom,
         name: exercise.name,
         instructions: exercise.instructions,
-        videoUrl: exercise.videoUrl,
         status: exercise.status
     };
 }

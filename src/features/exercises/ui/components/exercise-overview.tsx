@@ -1,13 +1,41 @@
 import { ExternalLinkIcon, FileTextIcon, VideoIcon } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle, buttonVariants } from '@/shared';
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    YouTubeEmbed,
+    buttonVariants,
+    getYouTubeVideoId
+} from '@/shared';
 
 import type { ExerciseDetails } from '../queries/get-exercise-details-or-redirect';
 
+function ExerciseVideo({ name, videoUrl }: { name: string; videoUrl: string }) {
+    const youTubeVideoId = getYouTubeVideoId({ url: videoUrl });
+
+    if (!youTubeVideoId) {
+        return (
+            <a
+                href={videoUrl}
+                target='_blank'
+                rel='noreferrer'
+                className={buttonVariants({ variant: 'outline' })}
+            >
+                Otwórz film instruktażowy
+                <ExternalLinkIcon data-icon='inline-end' />
+            </a>
+        );
+    }
+
+    return <YouTubeEmbed videoId={youTubeVideoId} title={`Film instruktażowy: ${name}`} />;
+}
+
 export function ExerciseOverview({ exercise }: { exercise: ExerciseDetails }) {
     return (
-        <div className='grid gap-4 lg:grid-cols-3'>
-            <Card className='lg:col-span-2'>
+        <div className='flex flex-col gap-4'>
+            <Card>
                 <CardHeader>
                     <CardTitle className='flex items-center gap-2'>
                         <FileTextIcon className='size-4' />
@@ -16,7 +44,7 @@ export function ExerciseOverview({ exercise }: { exercise: ExerciseDetails }) {
                 </CardHeader>
                 <CardContent>
                     {exercise.instructions ? (
-                        <p className='text-sm leading-relaxed whitespace-pre-line'>
+                        <p className='max-w-3xl text-sm leading-relaxed whitespace-pre-line'>
                             {exercise.instructions}
                         </p>
                     ) : (
@@ -36,15 +64,7 @@ export function ExerciseOverview({ exercise }: { exercise: ExerciseDetails }) {
                 </CardHeader>
                 <CardContent>
                     {exercise.videoUrl ? (
-                        <a
-                            href={exercise.videoUrl}
-                            target='_blank'
-                            rel='noreferrer'
-                            className={buttonVariants({ variant: 'outline' })}
-                        >
-                            Otwórz film instruktażowy
-                            <ExternalLinkIcon data-icon='inline-end' />
-                        </a>
+                        <ExerciseVideo name={exercise.name} videoUrl={exercise.videoUrl} />
                     ) : (
                         <p className='text-muted-foreground text-sm'>Nie dodano filmu.</p>
                     )}

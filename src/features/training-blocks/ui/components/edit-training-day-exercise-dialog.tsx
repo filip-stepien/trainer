@@ -1,7 +1,5 @@
 'use client';
 
-import { ExternalLinkIcon } from 'lucide-react';
-
 import {
     Button,
     Dialog,
@@ -24,29 +22,14 @@ import {
 } from './training-day-exercise-prescription-fields';
 
 function ExerciseReference({ exercise }: { exercise: TrainingDayExerciseDetails }) {
-    if (!exercise.instructions && !exercise.videoUrl) {
+    if (!exercise.instructions) {
         return null;
     }
 
     return (
-        <div className='bg-muted/50 flex flex-col gap-2 rounded-lg p-3 text-sm'>
-            {exercise.instructions ? (
-                <p className='text-muted-foreground line-clamp-4 whitespace-pre-line'>
-                    {exercise.instructions}
-                </p>
-            ) : null}
-            {exercise.videoUrl ? (
-                <a
-                    href={exercise.videoUrl}
-                    target='_blank'
-                    rel='noreferrer'
-                    className='flex items-center gap-1 self-start font-medium underline-offset-4 hover:underline'
-                >
-                    Materiał instruktażowy
-                    <ExternalLinkIcon className='size-3.5' />
-                </a>
-            ) : null}
-        </div>
+        <p className='bg-muted/50 text-muted-foreground line-clamp-4 rounded-lg p-3 text-sm whitespace-pre-line'>
+            {exercise.instructions}
+        </p>
     );
 }
 

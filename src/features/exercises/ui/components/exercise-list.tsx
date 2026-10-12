@@ -4,7 +4,6 @@ import {
     BookOpenIcon,
     CheckIcon,
     DumbbellIcon,
-    ExternalLinkIcon,
     LibraryIcon,
     PlusIcon
 } from 'lucide-react';
@@ -138,24 +137,7 @@ function ExerciseLibraryTile({ exercise }: { exercise: ExerciseLibraryListItem }
                     {exercise.instructions || 'Brak instrukcji technicznej.'}
                 </p>
             </CardContent>
-            <CardFooter className='justify-between gap-2'>
-                {exercise.videoUrl ? (
-                    <a
-                        href={exercise.videoUrl}
-                        target='_blank'
-                        rel='noreferrer'
-                        className={buttonVariants({
-                            variant: 'ghost',
-                            size: 'sm',
-                            className: 'relative z-10 -ml-2'
-                        })}
-                    >
-                        Film
-                        <ExternalLinkIcon data-icon='inline-end' />
-                    </a>
-                ) : (
-                    <span className='text-muted-foreground text-xs'>Bez filmu</span>
-                )}
+            <CardFooter className='justify-end'>
                 <ExerciseStatusForm
                     exerciseId={exercise.id}
                     status={exercise.status}

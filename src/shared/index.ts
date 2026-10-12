@@ -85,6 +85,7 @@ export { getInitials } from './ui/lib/initials';
 export { formatCount } from './ui/lib/plural';
 export { normalizeSearchText } from './ui/lib/search';
 export { cn } from './ui/lib/utils';
+export { getYouTubeVideoId } from './ui/lib/video';
 export { ConfirmDialog } from './ui/patterns/confirm-dialog';
 export {
     PageContainer,
@@ -99,3 +100,4 @@ export { SearchField } from './ui/patterns/search-field';
 export { AddTile, addTileVariants, Tile, TileGrid, TileLink } from './ui/patterns/tile';
 export { WizardNavigation, WizardStep, WizardSteps } from './ui/patterns/wizard';
 export type { WizardStepDefinition } from './ui/hooks/use-wizard';
+export { YouTubeEmbed } from './ui/patterns/youtube-embed';
